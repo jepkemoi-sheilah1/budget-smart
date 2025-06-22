@@ -1,7 +1,9 @@
-import logo from './logo.svg';
+import React from 'react';
+import Dashboard from './pages/Dashboard';
 import './App.css';
 
 function App() {
-  return <h1> Budget Smart</h1>
+  return <Dashboard />;
 }
+
 export default App;
