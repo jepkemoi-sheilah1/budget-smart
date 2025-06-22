@@ -1,4 +1,4 @@
-import React from 'react';
+iimport React from 'react';
 import BalanceCard from '../components/BalanceCard';
 import CategoryCard from '../components/CategoryCard';
 import Chart from '../components/Chart';
