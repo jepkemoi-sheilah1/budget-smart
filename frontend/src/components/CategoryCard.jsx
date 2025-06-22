@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ExpenseContext } from '../context/ExpenseContext';
 
-const CategoryCard = ({ category, amount }) => {
+const CategoryCard = ({ category }) => {
+  const { budgets } = useContext(ExpenseContext);
+  const amount = budgets[category] || 0;
+
   return (
     <div style={{
       border: '1px solid #ccc',

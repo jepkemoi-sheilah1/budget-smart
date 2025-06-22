@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ExpenseContext } from '../context/ExpenseContext';
 
 const BalanceCard = () => {
+  const { totalBudget, totalSpent, remaining } = useContext(ExpenseContext);
+
   return (
     <div style={{
       border: '1px solid #ccc',
@@ -15,15 +18,15 @@ const BalanceCard = () => {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>Total Balance</span>
-        <span>$0.00</span>
+        <span>${totalBudget.toFixed(2)}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>Spent</span>
-        <span>$0.00</span>
+        <span>${totalSpent.toFixed(2)}</span>
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <span>Remaining</span>
-        <span>$0.00</span>
+        <span>${remaining.toFixed(2)}</span>
       </div>
     </div>
   );
