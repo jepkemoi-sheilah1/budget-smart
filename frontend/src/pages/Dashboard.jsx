@@ -1,9 +1,10 @@
-iimport React from 'react';
+import React from 'react';
 import BalanceCard from '../components/BalanceCard';
 import CategoryCard from '../components/CategoryCard';
 import Chart from '../components/Chart';
 import ExpenseList from '../components/ExpenseList';
 import Navbar from '../components/Navbar';
+import BudgetForm from '../components/BudgetForm';
 import { ExpenseProvider } from '../context/ExpenseContext';
 
 const Dashboard = () => {
@@ -22,10 +23,10 @@ const Dashboard = () => {
         <section style={{ marginTop: 30 }}>
           <h2 style={{ fontSize: 18, marginBottom: 10 }}>Category Summary</h2>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <CategoryCard category="Food" amount={0} />
-            <CategoryCard category="Transport" amount={0} />
-            <CategoryCard category="Shopping" amount={0} />
-            <CategoryCard category="Other" amount={0} />
+            <CategoryCard category="Food" />
+            <CategoryCard category="Transport" />
+            <CategoryCard category="Shopping" />
+            <CategoryCard category="Other" />
           </div>
         </section>
 
@@ -38,6 +39,8 @@ const Dashboard = () => {
           <h2 style={{ fontSize: 18, marginBottom: 10 }}>Recent Expenses</h2>
           <ExpenseList />
         </section>
+
+        <BudgetForm />
 
         <Navbar />
       </div>
