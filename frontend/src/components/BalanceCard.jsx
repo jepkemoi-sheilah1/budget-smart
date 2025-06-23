@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { ExpenseContext } from '../context/ExpenseContext';
 
 const BalanceCard = () => {
-  const { totalBudget, totalSpent } = useContext(ExpenseContext);
+  const { totalBudget, totalSpent, remaining } = useContext(ExpenseContext);
 
   return (
     <div className="balance-card">
@@ -13,6 +13,10 @@ const BalanceCard = () => {
       <div>
         <div className="balance-card-label">Total Expenses</div>
         <div className="balance-card-amount">${totalSpent.toFixed(0)}</div>
+      </div>
+      <div>
+        <div className="balance-card-label">Remaining</div>
+        <div className="balance-card-amount">${remaining.toFixed(0)}</div>
       </div>
     </div>
   );
