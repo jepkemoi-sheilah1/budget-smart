@@ -5,10 +5,10 @@ export const ExpenseContext = createContext();
 export const ExpenseProvider = ({ children }) => {
   const [expenses, setExpenses] = useState([]);
   const [budgets, setBudgets] = useState({
+    Housing: 0,
     Food: 0,
-    Transport: 0,
-    Shopping: 0,
-    Other: 0,
+    Transportation: 0,
+    Entertainment: 0,
   });
 
   const addExpense = (expense) => {
