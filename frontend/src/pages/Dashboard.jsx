@@ -9,10 +9,10 @@ import { ExpenseProvider } from '../context/ExpenseContext';
 const Dashboard = () => {
   return (
     <ExpenseProvider>
-      <div className="dashboard-container" style={{ maxWidth: 400, margin: '0 auto', padding: 20, fontFamily: 'Arial, sans-serif' }}>
-        <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h1 style={{ margin: 0 }}>Budget Smart</h1>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#ccc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+      <div className="dashboard-container">
+        <header className="dashboard-header">
+          <h1 className="dashboard-title">Budget Smart</h1>
+          <div className="dashboard-user-icon">
             <span role="img" aria-label="user">👤</span>
           </div>
         </header>
@@ -20,7 +20,7 @@ const Dashboard = () => {
         <BalanceCard />
 
         <section style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>Category Summary</h2>
+          <h2 className="dashboard-section-title">Category Summary</h2>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <CategoryCard category="Food" />
             <CategoryCard category="Transport" />
@@ -30,12 +30,12 @@ const Dashboard = () => {
         </section>
 
         <section style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>Monthly Overview</h2>
+          <h2 className="dashboard-section-title">Monthly Overview</h2>
           <Chart />
         </section>
 
         <section style={{ marginTop: 30 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>Recent Expenses</h2>
+          <h2 className="dashboard-section-title">Recent Expenses</h2>
           <ExpenseList />
         </section>
 

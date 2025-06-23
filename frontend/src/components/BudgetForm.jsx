@@ -23,14 +23,14 @@ const BudgetForm = () => {
   };
 
   return (
-    <form onSubmit={handleAddExpense} style={{ display: 'flex', gap: 10, maxWidth: 400, margin: '20px auto' }}>
+    <form onSubmit={handleAddExpense} className="budget-form">
       <input
         type="text"
         placeholder="Description"
         value={expenseName}
         onChange={(e) => setExpenseName(e.target.value)}
         required
-        style={{ flex: 2, padding: 8, borderRadius: 4, border: '1px solid #3399ff' }}
+        className="budget-form-input"
       />
       <input
         type="number"
@@ -40,27 +40,19 @@ const BudgetForm = () => {
         required
         min="0"
         step="0.01"
-        style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #3399ff' }}
+        className="budget-form-input budget-form-number"
       />
       <select
         value={expenseCategory}
         onChange={(e) => setExpenseCategory(e.target.value)}
-        style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #3399ff' }}
+        className="budget-form-select"
       >
         <option value="Housing">Housing</option>
         <option value="Food">Food</option>
         <option value="Transportation">Transportation</option>
         <option value="Entertainment">Entertainment</option>
       </select>
-      <button type="submit" style={{
-        backgroundColor: '#007bff',
-        color: '#fff',
-        border: 'none',
-        borderRadius: 4,
-        padding: '8px 16px',
-        cursor: 'pointer',
-        fontSize: 16
-      }}>
+      <button type="submit" className="budget-form-button">
         Add
       </button>
     </form>

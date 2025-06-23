@@ -1,0 +1,165 @@
+/* Navbar styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  border-bottom: 1px solid #3399ff; /* lighter blue */
+  background-color: #cce6ff; /* very light blue */
+  font-family: Arial, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.navbar-title {
+  font-weight: bold;
+  font-size: 24px;
+  color: #003366; /* dark navy blue */
+}
+
+.navbar-link {
+  color: #0066cc; /* medium blue */
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.navbar-link.active {
+  font-weight: bold;
+  color: #004080; /* dark blue */
+}
+
+.navbar-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* BalanceCard styles */
+.balance-card {
+  border: 1px solid #3399ff; /* lighter blue border */
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: #e6f0ff; /* very light blue background */
+}
+
+.balance-card-label {
+  font-size: 14px;
+  color: #004080; /* dark blue text */
+}
+
+.balance-card-amount {
+  font-weight: bold;
+  font-size: 24px;
+  color: #003366; /* dark navy blue */
+}
+
+/* CategoryCard styles */
+.category-card {
+  border: 1px solid #3399ff; /* lighter blue border */
+  border-radius: 8px;
+  padding: 10px;
+  width: 80px;
+  text-align: center;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background-color: #e6f0ff; /* very light blue background */
+}
+
+.category-card-icon {
+  width: 40px;
+  height: 40px;
+  background-color: #cce6ff; /* light blue background */
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
+.category-card-text {
+  color: #004080;
+  font-weight: bold;
+}
+
+/* BudgetForm styles */
+.budget-form {
+  display: flex;
+  gap: 10px;
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+.budget-form-input,
+.budget-form-select {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #3399ff;
+}
+
+.budget-form-input {
+  flex: 2;
+}
+
+.budget-form-number,
+.budget-form-select {
+  flex: 1;
+}
+
+.budget-form-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* Dashboard container */
+.dashboard-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: #f0f8ff;
+  color: #003366;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dashboard-title {
+  margin: 0;
+  color: #004080;
+}
+
+.dashboard-user-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #3399ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.dashboard-section-title {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #004080;
+}
