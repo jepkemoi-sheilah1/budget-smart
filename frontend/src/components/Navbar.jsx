@@ -9,30 +9,41 @@ const Navbar = () => {
 
   return (
     <nav style={{
-      position: 'fixed',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-      borderTop: '1px solid #ccc',
-      backgroundColor: '#fff',
       display: 'flex',
-      justifyContent: 'space-around',
+      justifyContent: 'space-between',
       alignItems: 'center',
-      fontSize: 24
+      padding: '10px 20px',
+      borderBottom: '1px solid #ccc',
+      backgroundColor: '#fff',
+      fontFamily: 'Arial, sans-serif',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000
     }}>
-      <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="home">
-        🏠
-      </NavLink>
-      <NavLink to="/register" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="register">
-        ➕
-      </NavLink>
-      <NavLink to="/login" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="login">
-        ⏰
-      </NavLink>
-      <NavLink to="/settings" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="settings">
-        ⚙️
-      </NavLink>
+      <div style={{ fontWeight: 'bold', fontSize: 24 }}>
+        Expense Tracker
+      </div>
+      <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
+        <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
+          Dashboard
+        </NavLink>
+        <NavLink to="/login" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
+          Log in
+        </NavLink>
+        <NavLink to="/register" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
+          <button style={{
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: 4,
+            padding: '6px 12px',
+            cursor: 'pointer',
+            fontSize: 16
+          }}>
+            Sign up
+          </button>
+        </NavLink>
+      </div>
     </nav>
   );
 };
