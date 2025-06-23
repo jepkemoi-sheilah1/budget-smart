@@ -6,6 +6,7 @@ const BudgetForm = () => {
 
   const [expenseName, setExpenseName] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('Housing');
 
   const handleAddExpense = (e) => {
     e.preventDefault();
@@ -14,6 +15,7 @@ const BudgetForm = () => {
     addExpense({
       name: expenseName,
       amount: parseFloat(expenseAmount),
+      category: expenseCategory,
     });
 
     setExpenseName('');
@@ -40,6 +42,16 @@ const BudgetForm = () => {
         step="0.01"
         style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
       />
+      <select
+        value={expenseCategory}
+        onChange={(e) => setExpenseCategory(e.target.value)}
+        style={{ flex: 1, padding: 8, borderRadius: 4, border: '1px solid #ccc' }}
+      >
+        <option value="Housing">Housing</option>
+        <option value="Food">Food</option>
+        <option value="Transportation">Transportation</option>
+        <option value="Entertainment">Entertainment</option>
+      </select>
       <button type="submit" style={{
         backgroundColor: '#007bff',
         color: '#fff',

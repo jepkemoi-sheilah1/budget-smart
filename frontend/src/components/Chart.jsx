@@ -7,11 +7,15 @@ const COLORS = ['#4A90E2', '#9B59B6', '#F5A623', '#E74C3C'];
 const Chart = () => {
   const { budgets } = useContext(ExpenseContext);
 
+  console.log('Budgets in Chart:', budgets);
+
   const data = Object.keys(budgets).map((key, index) => ({
     name: key,
     value: budgets[key],
     color: COLORS[index % COLORS.length],
   }));
+
+  console.log('Chart data:', data);
 
   return (
     <ResponsiveContainer width="100%" height={200}>
