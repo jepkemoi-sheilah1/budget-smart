@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { ExpenseContext } from '../context/ExpenseContext';
 
 const BalanceCard = () => {
-  const { totalBudget, totalSpent, remaining } = useContext(ExpenseContext);
+  const { totalBudget, totalSpent } = useContext(ExpenseContext);
 
   return (
     <div style={{
@@ -10,23 +10,18 @@ const BalanceCard = () => {
       borderRadius: 8,
       padding: 20,
       display: 'flex',
-      flexDirection: 'column',
-      gap: 12,
+      justifyContent: 'space-between',
       fontSize: 16,
       maxWidth: 400,
       margin: '0 auto'
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Total Balance</span>
-        <span>${totalBudget.toFixed(2)}</span>
+      <div>
+        <div style={{ fontSize: 14, color: '#555' }}>Budget</div>
+        <div style={{ fontWeight: 'bold', fontSize: 24 }}>${totalBudget.toFixed(0)}</div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Spent</span>
-        <span>${totalSpent.toFixed(2)}</span>
-      </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span>Remaining</span>
-        <span>${remaining.toFixed(2)}</span>
+      <div>
+        <div style={{ fontSize: 14, color: '#555' }}>Total Expenses</div>
+        <div style={{ fontWeight: 'bold', fontSize: 24 }}>${totalSpent.toFixed(0)}</div>
       </div>
     </div>
   );
