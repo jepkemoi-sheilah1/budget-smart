@@ -1,6 +1,12 @@
 import React from 'react';
+import { NavLink } from 'react-router-dom';
 
 const Navbar = () => {
+  const activeStyle = {
+    fontWeight: 'bold',
+    color: 'blue',
+  };
+
   return (
     <nav style={{
       position: 'fixed',
@@ -15,10 +21,18 @@ const Navbar = () => {
       alignItems: 'center',
       fontSize: 24
     }}>
-      <div role="img" aria-label="home" style={{ cursor: 'pointer' }}>🏠</div>
-      <div role="img" aria-label="add" style={{ cursor: 'pointer' }}>➕</div>
-      <div role="img" aria-label="clock" style={{ cursor: 'pointer' }}>⏰</div>
-      <div role="img" aria-label="settings" style={{ cursor: 'pointer' }}>⚙️</div>
+      <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="home">
+        🏠
+      </NavLink>
+      <NavLink to="/register" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="register">
+        ➕
+      </NavLink>
+      <NavLink to="/login" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="login">
+        ⏰
+      </NavLink>
+      <NavLink to="/settings" style={({ isActive }) => (isActive ? activeStyle : undefined)} aria-label="settings">
+        ⚙️
+      </NavLink>
     </nav>
   );
 };
