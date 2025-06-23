@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 const Navbar = () => {
   const activeStyle = {
     fontWeight: 'bold',
-    color: 'blue',
+    color: '#004080', // dark blue
   };
 
   return (
@@ -13,21 +13,21 @@ const Navbar = () => {
       justifyContent: 'space-between',
       alignItems: 'center',
       padding: '10px 20px',
-      borderBottom: '1px solid #ccc',
-      backgroundColor: '#fff',
+      borderBottom: '1px solid #3399ff', // lighter blue
+      backgroundColor: '#cce6ff', // very light blue
       fontFamily: 'Arial, sans-serif',
       position: 'sticky',
       top: 0,
       zIndex: 1000
     }}>
-      <div style={{ fontWeight: 'bold', fontSize: 24 }}>
+      <div style={{ fontWeight: 'bold', fontSize: 24, color: '#003366' /* dark navy blue */ }}>
         Budget Smart
       </div>
       <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-        <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
+        <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : {color: '#0066cc'})}>
           Dashboard
         </NavLink>
-        <NavLink to="/login" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
+        <NavLink to="/login" style={({ isActive }) => (isActive ? activeStyle : {color: '#0066cc'})}>
           Log in
         </NavLink>
         <NavLink to="/register" style={({ isActive }) => (isActive ? activeStyle : undefined)}>
