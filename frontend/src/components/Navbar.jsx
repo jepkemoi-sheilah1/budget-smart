@@ -21,7 +21,7 @@ const Navbar = () => {
       zIndex: 1000
     }}>
       <div style={{ fontWeight: 'bold', fontSize: 24 }}>
-        Expense Tracker
+        Budget Smart
       </div>
       <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
         <NavLink to="/" style={({ isActive }) => (isActive ? activeStyle : undefined)}>

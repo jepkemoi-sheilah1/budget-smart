@@ -11,7 +11,7 @@ const Dashboard = () => {
     <ExpenseProvider>
       <div className="dashboard-container" style={{ maxWidth: 400, margin: '0 auto', padding: 20, fontFamily: 'Arial, sans-serif' }}>
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h1 style={{ margin: 0 }}>Expense Tracker</h1>
+          <h1 style={{ margin: 0 }}>Budget Smart</h1>
           <div style={{ width: 32, height: 32, borderRadius: '50%', backgroundColor: '#ccc', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <span role="img" aria-label="user">👤</span>
           </div>

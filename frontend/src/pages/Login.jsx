@@ -12,7 +12,7 @@ const Login = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Add login logic here
+    // login logic 
     console.log('Login form submitted', formData);
   };
 
