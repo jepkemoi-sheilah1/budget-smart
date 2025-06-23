@@ -4,8 +4,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  border-bottom: 1px solid #3399ff; /* lighter blue */
-  background-color: #cce6ff; /* very light blue */
+  border-bottom: 1px solid #3b82f6; /* Accent Color */
+  background-color: #f9fafb; /* Background */
   font-family: Arial, sans-serif;
   position: sticky;
   top: 0;
@@ -15,22 +15,22 @@
 .navbar-title {
   font-weight: bold;
   font-size: 24px;
-  color: #003366; /* dark navy blue */
+  color: #111827; /* Text Color */
 }
 
 .navbar-link {
-  color: #0066cc; /* medium blue */
+  color: #2563eb; /* Primary Color */
   text-decoration: none;
   margin-right: 20px;
 }
 
 .navbar-link.active {
   font-weight: bold;
-  color: #004080; /* dark blue */
+  color: #3b82f6; /* Accent Color */
 }
 
 .navbar-button {
-  background-color: #007bff;
+  background-color: #2563eb; /* Primary Color */
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -41,7 +41,7 @@
 
 /* BalanceCard styles */
 .balance-card {
-  border: 1px solid #3399ff; /* lighter blue border */
+  border: 1px solid #3b82f6; /* Accent Color border */
   border-radius: 8px;
   padding: 20px;
   display: flex;
@@ -49,23 +49,24 @@
   font-size: 16px;
   max-width: 400px;
   margin: 0 auto;
-  background-color: #e6f0ff; /* very light blue background */
+  background-color: #ffffff; /* Cards/Sections background */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* soft shadow */
 }
 
 .balance-card-label {
   font-size: 14px;
-  color: #004080; /* dark blue text */
+  color: #111827; /* Text Color */
 }
 
 .balance-card-amount {
   font-weight: bold;
   font-size: 24px;
-  color: #003366; /* dark navy blue */
+  color: #2563eb; /* Primary Color */
 }
 
 /* CategoryCard styles */
 .category-card {
-  border: 1px solid #3399ff; /* lighter blue border */
+  border: 1px solid #3b82f6; /* Accent Color border */
   border-radius: 8px;
   padding: 10px;
   width: 80px;
@@ -75,19 +76,20 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  background-color: #e6f0ff; /* very light blue background */
+  background-color: #ffffff; /* Cards/Sections background */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* soft shadow */
 }
 
 .category-card-icon {
   width: 40px;
   height: 40px;
-  background-color: #cce6ff; /* light blue background */
+  background-color: #f9fafb; /* Background */
   border-radius: 8px;
   margin-bottom: 4px;
 }
 
 .category-card-text {
-  color: #004080;
+  color: #2563eb; /* Primary Color */
   font-weight: bold;
 }
 
@@ -103,7 +105,7 @@
 .budget-form-select {
   padding: 8px;
   border-radius: 4px;
-  border: 1px solid #3399ff;
+  border: 1px solid #3b82f6; /* Accent Color */
 }
 
 .budget-form-input {
@@ -116,7 +118,7 @@
 }
 
 .budget-form-button {
-  background-color: #007bff;
+  background-color: #2563eb; /* Primary Color */
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -131,8 +133,8 @@
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
-  background-color: #f0f8ff;
-  color: #003366;
+  background-color: #f9fafb; /* Background */
+  color: #111827; /* Text Color */
 }
 
 .dashboard-header {
@@ -144,14 +146,14 @@
 
 .dashboard-title {
   margin: 0;
-  color: #004080;
+  color: #2563eb; /* Primary Color */
 }
 
 .dashboard-user-icon {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #3399ff;
+  background-color: #3b82f6; /* Accent Color */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -161,5 +163,63 @@
 .dashboard-section-title {
   font-size: 18px;
   margin-bottom: 10px;
-  color: #004080;
+  color: #2563eb; /* Primary Color */
+}
+
+.dashboard-main-content {
+  display: flex;
+  gap: 40px;
+  margin-top: 30px;
+}
+
+.dashboard-categories {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.category-list-vertical {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.category-item {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #111827; /* Text Color */
+}
+
+.category-item.selected {
+  background-color: #2563eb; /* Primary Color */
+  color: white;
+}
+
+.dashboard-budget-total {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.budget-section, .total-expenses-section {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.dashboard-expenses {
+  margin-top: 30px;
+}
+
+/* BudgetForm full width at bottom */
+.budget-form {
+  max-width: 100%;
+  margin-top: 30px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }

@@ -17,24 +17,38 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <BalanceCard />
+        <div className="dashboard-main-content">
+          <aside className="dashboard-categories">
+            <h2 className="dashboard-section-title">Category Summary</h2>
+            <ul className="category-list-vertical">
+              <li className="category-item selected">Housing</li>
+              <li className="category-item">Food</li>
+              <li className="category-item">Transportation</li>
+              <li className="category-item">Entertainment</li>
+            </ul>
+          </aside>
 
-        <section style={{ marginTop: 30 }}>
-          <h2 className="dashboard-section-title">Category Summary</h2>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <CategoryCard category="Food" />
-            <CategoryCard category="Transport" />
-            <CategoryCard category="Shopping" />
-            <CategoryCard category="Other" />
-          </div>
-        </section>
+          <section className="dashboard-center-section">
+            <div className="budget-total-row">
+              <div className="budget-section">
+                <h2 className="dashboard-section-title">Budget</h2>
+                <BalanceCard />
+              </div>
 
-        <section style={{ marginTop: 30 }}>
-          <h2 className="dashboard-section-title">Monthly Overview</h2>
-          <Chart />
-        </section>
+              <div className="total-expenses-section">
+                <h2 className="dashboard-section-title">Total Expenses</h2>
+                <BalanceCard /> {/* Assuming BalanceCard can be reused or create a new component */}
+              </div>
+            </div>
 
-        <section style={{ marginTop: 30 }}>
+            <div className="chart-section">
+              <h2 className="dashboard-section-title">Monthly Overview</h2>
+              <Chart />
+            </div>
+          </section>
+        </div>
+
+        <section className="dashboard-expenses">
           <h2 className="dashboard-section-title">Recent Expenses</h2>
           <ExpenseList />
         </section>
