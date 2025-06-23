@@ -12,7 +12,11 @@ export const ExpenseProvider = ({ children }) => {
   });
 
   const addExpense = (expense) => {
-    setExpenses(prevExpenses => [...prevExpenses, { id: Date.now(), ...expense }]);
+    const expenseWithDate = {
+      ...expense,
+      date: expense.date || new Date().toLocaleDateString(),
+    };
+    setExpenses(prevExpenses => [...prevExpenses, { id: Date.now(), ...expenseWithDate }]);
   };
 
   const deleteExpense = (id) => {

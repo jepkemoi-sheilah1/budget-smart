@@ -5,18 +5,18 @@ const BalanceCard = () => {
   const { totalBudget, totalSpent, remaining } = useContext(ExpenseContext);
 
   return (
-    <div className="balance-card">
-      <div>
-        <div className="balance-card-label">Budget</div>
-        <div className="balance-card-amount">${totalBudget.toFixed(0)}</div>
+    <div className="balance-card" style={{ display: 'flex', justifyContent: 'space-around', gap: '20px' }}>
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        <div className="balance-card-label">Monthly Budget</div>
+        <div className="balance-card-amount" style={{ fontSize: '1rem' }}>${totalBudget.toFixed(0)}</div>
       </div>
-      <div>
+      <div style={{ flex: 1, textAlign: 'center' }}>
         <div className="balance-card-label">Total Expenses</div>
-        <div className="balance-card-amount">${totalSpent.toFixed(0)}</div>
+        <div className="balance-card-amount" style={{ fontSize: '1rem' }}>${totalSpent.toFixed(0)}</div>
       </div>
-      <div>
+      <div style={{ flex: 1, textAlign: 'center' }}>
         <div className="balance-card-label">Remaining</div>
-        <div className="balance-card-amount">${remaining.toFixed(0)}</div>
+        <div className="balance-card-amount" style={{ fontSize: '1rem' }}>${remaining.toFixed(0)}</div>
       </div>
     </div>
   );
