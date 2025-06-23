@@ -3,7 +3,6 @@ import BalanceCard from '../components/BalanceCard';
 import CategoryCard from '../components/CategoryCard';
 import Chart from '../components/Chart';
 import ExpenseList from '../components/ExpenseList';
-import Navbar from '../components/Navbar';
 import BudgetForm from '../components/BudgetForm';
 import { ExpenseProvider } from '../context/ExpenseContext';
 
@@ -42,7 +41,6 @@ const Dashboard = () => {
 
         <BudgetForm />
 
-        <Navbar />
       </div>
     </ExpenseProvider>
   );
