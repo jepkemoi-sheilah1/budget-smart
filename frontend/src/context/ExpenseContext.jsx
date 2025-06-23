@@ -15,6 +15,10 @@ export const ExpenseProvider = ({ children }) => {
     setExpenses(prevExpenses => [...prevExpenses, { id: Date.now(), ...expense }]);
   };
 
+  const deleteExpense = (id) => {
+    setExpenses(prevExpenses => prevExpenses.filter(expense => expense.id !== id));
+  };
+
   const totalSpent = expenses.reduce((total, expense) => total + expense.amount, 0);
 
   const totalBudget = Object.values(budgets).reduce((total, amount) => total + amount, 0);
@@ -32,6 +36,7 @@ export const ExpenseProvider = ({ children }) => {
     <ExpenseContext.Provider value={{
       expenses,
       addExpense,
+      deleteExpense,
       budgets,
       updateBudget,
       totalSpent,
