@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { register } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -7,20 +9,36 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({...formData, [e.target.name]: e.target.value});
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Add registration logic here
-    console.log('Register form submitted', formData);
+    setError('');
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    try {
+      await register({
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+      });
+      navigate('/login');
+    } catch (err) {
+      setError('Registration failed. Please try again.');
+    }
   };
 
   return (
     <div className="register-container">
       <h1>Register</h1>
+      {error && <p style={{color: 'red'}}>{error}</p>}
       <form onSubmit={handleSubmit} className="register-form">
         <input
           type="text"
