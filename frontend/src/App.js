@@ -12,12 +12,14 @@ function App() {
   return (
     <Router>
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <div className="main-content">
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </div>
       <Footer />
     </Router>
   );

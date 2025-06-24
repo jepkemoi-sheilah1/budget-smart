@@ -19,9 +19,9 @@ const Register = () => {
   };
 
   return (
-    <div className="register-container" style={{ maxWidth: 400, margin: '0 auto', padding: 20, fontFamily: 'Arial, sans-serif' }}>
-      <h1 style={{ textAlign: 'center' }}>Register</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 15 }}>
+    <div className="register-container">
+      <h1>Register</h1>
+      <form onSubmit={handleSubmit} className="register-form">
         <input
           type="text"
           name="username"
@@ -29,7 +29,6 @@ const Register = () => {
           value={formData.username}
           onChange={handleChange}
           required
-          style={{ padding: 10, fontSize: 16 }}
         />
         <input
           type="email"
@@ -38,7 +37,6 @@ const Register = () => {
           value={formData.email}
           onChange={handleChange}
           required
-          style={{ padding: 10, fontSize: 16 }}
         />
         <input
           type="password"
@@ -47,7 +45,6 @@ const Register = () => {
           value={formData.password}
           onChange={handleChange}
           required
-          style={{ padding: 10, fontSize: 16 }}
         />
         <input
           type="password"
@@ -56,9 +53,8 @@ const Register = () => {
           value={formData.confirmPassword}
           onChange={handleChange}
           required
-          style={{ padding: 10, fontSize: 16 }}
         />
-        <button type="submit" style={{ padding: 10, fontSize: 16, cursor: 'pointer' }}>Register</button>
+        <button type="submit">Register</button>
       </form>
     </div>
   );
