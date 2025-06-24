@@ -347,3 +347,21 @@
 .expense-list-item button.delete {
   background-color: red;
 }
+
+/* Footer styles */
+.footer {
+  background-color: #2563eb; /* Primary Color */
+  color: white;
+  padding: 15px 20px;
+  text-align: center;
+  font-size: 14px;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
