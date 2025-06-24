@@ -223,3 +223,127 @@
   gap: 10px;
   justify-content: center;
 }
+
+/* New styles for ExpenseForm component */
+.expense-form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.expense-form input,
+.expense-form select,
+.expense-form button {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 4px;
+  border: 1px solid #3b82f6;
+}
+
+.expense-form button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+/* Container styles for Chart component */
+.chart-container {
+  max-width: 400px;
+  margin: 20px auto;
+}
+
+/* Container and list styles for ExpenseList component */
+.expense-list-container {
+  max-width: 600px;
+  margin: 20px auto;
+  font-family: Arial, sans-serif;
+}
+
+.expense-list-filters {
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.expense-list-filters select,
+.expense-list-filters input {
+  padding: 5px;
+  border-radius: 4px;
+  border: 1px solid #3b82f6;
+}
+
+.expense-list-header {
+  display: flex;
+  font-weight: bold;
+  padding: 8px 0;
+  border-bottom: 2px solid #000;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.expense-list-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #ccc;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.expense-list-item .circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.expense-list-item .expense-name {
+  flex: 2 1 120px;
+  overflow-wrap: break-word;
+  min-width: 0;
+  text-align: left;
+}
+
+.expense-list-item .expense-date,
+.expense-list-item .expense-amount {
+  flex: 1 1 100px;
+  white-space: nowrap;
+  min-width: 0;
+  text-align: left;
+}
+
+.expense-list-item .expense-actions {
+  flex: 0 0 120px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.expense-list-item button {
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  min-width: 60px;
+  border: none;
+  color: white;
+}
+
+.expense-list-item button.edit {
+  background-color: blue;
+}
+
+.expense-list-item button.delete {
+  background-color: red;
+}
