@@ -4,6 +4,7 @@ import CategoryCard from '../components/CategoryCard';
 import Chart from '../components/Chart';
 import ExpenseList from '../components/ExpenseList';
 import BudgetForm from '../components/BudgetForm';
+import ExpenseForm from '../components/ExpenseForm';
 import { ExpenseProvider } from '../context/ExpenseContext';
 
 const Dashboard = () => {
@@ -28,17 +29,13 @@ const Dashboard = () => {
                 <li className="category-item">Entertainment</li>
               </ul>
             </nav>
-            <div className="budget-form-container">
-              <h2 className="dashboard-section-title">Set Monthly Budget</h2>
-              <BudgetForm />
-            </div>
           </aside>
 
           <section className="dashboard-center-section">
             <div className="budget-total-row">
               <div className="budget-section">
-                <h2 className="dashboard-section-title">Budget</h2>
-                <BalanceCard />
+                <h2 className="dashboard-section-title">Set Monthly Budget</h2>
+                <BudgetForm />
               </div>
               <div className="chart-section">
                 <h2 className="dashboard-section-title">Monthly Overview</h2>
@@ -51,6 +48,7 @@ const Dashboard = () => {
         <section className="dashboard-expenses">
           <h2 className="dashboard-section-title">Recent Expenses</h2>
           <ExpenseList />
+          <ExpenseForm />
         </section>
 
       </div>

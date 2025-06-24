@@ -38,40 +38,6 @@ const BudgetForm = () => {
 
   return (
     <>
-      <form onSubmit={handleAddExpense} className="budget-form">
-        <input
-          type="text"
-          placeholder="Description"
-          value={expenseName}
-          onChange={(e) => setExpenseName(e.target.value)}
-          required
-          className="budget-form-input"
-        />
-        <input
-          type="number"
-          placeholder="Amount"
-          value={expenseAmount}
-          onChange={(e) => setExpenseAmount(e.target.value)}
-          required
-          min="0"
-          step="0.01"
-          className="budget-form-input budget-form-number"
-        />
-        <select
-          value={expenseCategory}
-          onChange={(e) => setExpenseCategory(e.target.value)}
-          className="budget-form-select"
-        >
-          <option value="Housing">Housing</option>
-          <option value="Food">Food</option>
-          <option value="Transportation">Transportation</option>
-          <option value="Entertainment">Entertainment</option>
-        </select>
-        <button type="submit" className="budget-form-button">
-          Add Expense
-        </button>
-      </form>
-
       <form onSubmit={handleBudgetSubmit} className="budget-form" style={{ marginTop: '20px' }}>
         <h3>Set Monthly Budget</h3>
         <select
