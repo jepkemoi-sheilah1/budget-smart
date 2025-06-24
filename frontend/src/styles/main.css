@@ -5,38 +5,60 @@
   align-items: center;
   padding: 10px 20px;
   border-bottom: 1px solid #3b82f6; /* Accent Color */
-  background-color: #f9fafb; /* Background */
+  background-color: #2563eb; /* Primary Blue */
   font-family: Arial, sans-serif;
-  position: sticky;
+  position: fixed; /* changed from sticky to fixed */
   top: 0;
+  left: 0;
+  width: 100%;
   z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.3s ease;
+}
+
+.navbar:hover, .navbar-link:hover, .navbar-button:hover {
+  background-color: #1d4ed8; /* Hover darker blue */
 }
 
 .navbar-title {
   font-weight: bold;
   font-size: 24px;
-  color: #111827; /* Text Color */
+  color: #ffffff; /* White text */
 }
 
 .navbar-link {
-  color: #2563eb; /* Primary Color */
+  color: #ffffff; /* White text */
   text-decoration: none;
   margin-right: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  padding: 6px 10px;
+  border-radius: 4px;
 }
 
 .navbar-link.active {
   font-weight: bold;
   color: #3b82f6; /* Accent Color */
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.navbar-link:hover {
+  background-color: #1d4ed8; /* Hover darker blue */
+  color: #ffffff;
 }
 
 .navbar-button {
   background-color: #2563eb; /* Primary Color */
   color: #fff;
   border: none;
-  border-radius: 4px;
-  padding: 6px 12px;
+  border-radius: 6px;
+  padding: 8px 16px;
   cursor: pointer;
   font-size: 16px;
+  transition: background-color 0.3s ease;
+}
+
+.navbar-button:hover {
+  background-color: #1d4ed8; /* Hover darker blue */
 }
 
 /* BalanceCard styles */
@@ -129,12 +151,15 @@
 
 /* Dashboard container */
 .dashboard-container {
-  max-width: 400px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 20px;
   font-family: Arial, sans-serif;
   background-color: #f9fafb; /* Background */
-  color: #111827; /* Text Color */
+  color: #1e293b; /* Text Color */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .dashboard-header {
@@ -172,6 +197,22 @@
   margin-top: 30px;
 }
 
+.dashboard-aside {
+  display: flex;
+  gap: 20px;
+}
+
+.category-menu {
+  width: 200px;
+  border-right: 1px solid #e5e7eb;
+  padding-right: 20px;
+}
+
+.budget-form-container {
+  flex: 1;
+  padding-left: 20px;
+}
+
 .dashboard-categories {
   flex: 1;
   display: flex;
@@ -207,12 +248,37 @@
 .budget-section, .total-expenses-section {
   background-color: #ffffff;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border: 1px solid #e5e7eb;
+  transition: box-shadow 0.3s ease;
+}
+
+.budget-section:hover, .total-expenses-section:hover {
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
 
 .dashboard-expenses {
   margin-top: 30px;
+  overflow-x: auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+.expense-list {
+  min-width: 600px;
+  display: inline-block;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  justify-content: center; /* center horizontally */
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 20px;
 }
 
 /* BudgetForm full width at bottom */
@@ -222,18 +288,189 @@
   display: flex;
   gap: 10px;
   justify-content: center;
+  flex-wrap: wrap;
+}
+
+.budget-form input,
+.budget-form select {
+  flex: 1 1 150px;
+  min-width: 150px;
+  box-sizing: border-box;
+}
+
+.budget-form button {
+  flex: 0 0 auto;
+  min-width: 100px;
+}
+
+/* Footer styles */
+.footer {
+  background-color: #2563eb; /* Primary Color */
+  color: white;
+  text-align: center;
+  padding: 15px 0;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  z-index: 100;
+}
+
+.login-page, .register-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  padding-bottom: 60px; /* space for footer */
+}
+
+.login-container, .register-container {
+  flex-grow: 1;
+  max-width: 400px;
+  margin: auto;
+  padding: 40px 30px;
+  font-family: Arial, sans-serif;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  top: 0;
+  transform: none;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+/* ExpenseList styles */
+.expense-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Arial, sans-serif;
+}
+
+.expense-list-header, .expense-list-row {
+  display: flex;
+  padding: 10px 0;
+  border-bottom: 1px solid #e5e7eb;
+  align-items: center;
+}
+
+.expense-list-header {
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.expense-list-cell {
+  flex: 1;
+  padding: 0 10px;
+  text-align: left;
+}
+
+.expense-list-cell.amount {
+  text-align: right;
+}
+
+.expense-list-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.expense-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  color: white;
+}
+
+.expense-button.edit {
+  background-color: #2563eb;
+}
+
+.expense-button.edit:hover {
+  background-color: #1d4ed8;
+}
+
+.expense-button.delete {
+  background-color: #ef4444;
+}
+
+.expense-button.delete:hover {
+  background-color: #dc2626;
+}
+
+.expense-button.save {
+  background-color: #22c55e;
+}
+
+.expense-button.save:hover {
+  background-color: #16a34a;
+}
+
+.expense-button.cancel {
+  background-color: #6b7280;
+}
+
+.expense-button.cancel:hover {
+  background-color: #4b5563;
+}
+
+.expense-input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+.expense-input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+}
+
+/* Login/Register page background */
+.login-page, .register-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #e0f2fe 0%, #f9fafb 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
 }
 
 /* Login page styles */
 .login-container {
   max-width: 400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px 30px;
   font-family: Arial, sans-serif;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  top: 50%;
+  transform: translateY(50%);
 }
 
 .login-container h1 {
   text-align: center;
+  color: #2563eb;
+  font-weight: 700;
+  margin-bottom: 20px;
 }
 
 .login-form {
@@ -242,27 +479,55 @@
   gap: 15px;
 }
 
-.login-form input {
-  padding: 10px;
+.login-form input, .register-form input {
+  padding: 12px;
   font-size: 16px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  transition: border-color 0.3s ease;
 }
 
-.login-form button {
-  padding: 10px;
-  font-size: 16px;
+.login-form input:focus, .register-form input:focus {
+  outline: none;
+  border-color: #2563eb; /* Blue border on focus */
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+}
+
+.login-form button, .register-form button {
+  padding: 12px;
+  font-size: 18px;
+  background-color: #2563eb; /* Primary Blue */
+  color: white;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.login-form button:hover, .register-form button:hover {
+  background-color: #1d4ed8; /* Hover Blue */
 }
 
 /* Register page styles */
 .register-container {
   max-width: 400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 40px 30px;
   font-family: Arial, sans-serif;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  position: relative;
+  top: 50%;
+  transform: translateY(50%);
 }
 
 .register-container h1 {
   text-align: center;
+  color: #2563eb;
+  font-weight: 700;
+  margin-bottom: 20px;
 }
 
 .register-form {
@@ -306,14 +571,41 @@
   color: white;
   text-align: center;
   padding: 15px 0;
-  position: sticky;
+  position: fixed;
   bottom: 0;
   width: 100%;
   font-family: Arial, sans-serif;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .footer-content {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 20px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 15px;
+  font-size: 14px;
+}
+
+.footer-links a {
+  color: white;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-links a:hover {
+  color: #3b82f6; /* Accent Blue */
 }

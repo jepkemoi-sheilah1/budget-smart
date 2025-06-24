@@ -18,17 +18,17 @@ const Dashboard = () => {
         </header>
 
         <div className="dashboard-main-content">
-          <aside style={{ display: 'flex' }}>
-            <nav className="category-menu" style={{ width: '200px', borderRight: '1px solid #ccc', paddingRight: '10px' }}>
+          <aside className="dashboard-aside">
+            <nav className="category-menu">
               <h2 className="dashboard-section-title">Categories</h2>
-              <ul className="category-list-vertical" style={{ listStyle: 'none', padding: 0 }}>
-                <li className="category-item selected" style={{ padding: '8px 0', cursor: 'pointer' }}>Housing</li>
-                <li className="category-item" style={{ padding: '8px 0', cursor: 'pointer' }}>Food</li>
-                <li className="category-item" style={{ padding: '8px 0', cursor: 'pointer' }}>Transportation</li>
-                <li className="category-item" style={{ padding: '8px 0', cursor: 'pointer' }}>Entertainment</li>
+              <ul className="category-list-vertical">
+                <li className="category-item selected">Housing</li>
+                <li className="category-item">Food</li>
+                <li className="category-item">Transportation</li>
+                <li className="category-item">Entertainment</li>
               </ul>
             </nav>
-            <div style={{ flex: 1, paddingLeft: '20px' }}>
+            <div className="budget-form-container">
               <h2 className="dashboard-section-title">Set Monthly Budget</h2>
               <BudgetForm />
             </div>
@@ -40,11 +40,10 @@ const Dashboard = () => {
                 <h2 className="dashboard-section-title">Budget</h2>
                 <BalanceCard />
               </div>
-            </div>
-
-            <div className="chart-section">
-              <h2 className="dashboard-section-title">Monthly Overview</h2>
-              <Chart />
+              <div className="chart-section">
+                <h2 className="dashboard-section-title">Monthly Overview</h2>
+                <Chart />
+              </div>
             </div>
           </section>
         </div>
