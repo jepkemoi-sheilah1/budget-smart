@@ -61,29 +61,6 @@ const ExpenseList = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: '10px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ padding: '5px' }}>
-          <option value="All">All Categories</option>
-          <option value="Housing">Housing</option>
-          <option value="Food">Food</option>
-          <option value="Transportation">Transportation</option>
-          <option value="Entertainment">Entertainment</option>
-        </select>
-        <input
-          type="date"
-          value={filterStartDate}
-          onChange={(e) => setFilterStartDate(e.target.value)}
-          placeholder="Start Date"
-          style={{ padding: '5px' }}
-        />
-        <input
-          type="date"
-          value={filterEndDate}
-          onChange={(e) => setFilterEndDate(e.target.value)}
-          placeholder="End Date"
-          style={{ padding: '5px' }}
-        />
-      </div>
       {filteredExpenses.length === 0 ? (
         <div>No expenses added yet.</div>
       ) : (
@@ -117,13 +94,13 @@ const ExpenseList = () => {
                     type="date"
                     value={editDate}
                     onChange={(e) => setEditDate(e.target.value)}
-                    style={{ flex: '1 1 100px', minWidth: 0 }}
+                    style={{ flex: '1 1 100px', textAlign: 'left', minWidth: 0 }}
                   />
                   <input
                     type="number"
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value)}
-                    style={{ flex: '1 1 80px', minWidth: 0 }}
+                    style={{ flex: '1 1 80px', textAlign: 'right', minWidth: 0 }}
                     step="0.01"
                     min="0"
                   />
@@ -146,7 +123,7 @@ const ExpenseList = () => {
                 }}></div>
                 <div style={{ flex: '2 1 120px', overflowWrap: 'break-word', minWidth: 0, textAlign: 'left' }}>{expense.name}</div>
                 <div style={{ flex: '1 1 100px', textAlign: 'left', whiteSpace: 'nowrap', minWidth: 0 }}>{expense.date}</div>
-                <div style={{ flex: '1 1 80px', textAlign: 'left', whiteSpace: 'nowrap', minWidth: 0 }}>${expense.amount.toFixed(2)}</div>
+                <div style={{ flex: '1 1 80px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>${expense.amount.toFixed(2)}</div>
                 <div style={{ flex: '0 0 120px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
                   <button
                     onClick={() => startEdit(expense)}
