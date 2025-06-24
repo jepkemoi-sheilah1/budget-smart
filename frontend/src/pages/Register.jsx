@@ -78,4 +78,6 @@ const Register = () => {
   );
 };
 
+document.body.classList.add('register-page');
+
 export default Register;

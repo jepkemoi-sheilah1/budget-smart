@@ -16,7 +16,7 @@ const ExpenseForm = () => {
   };
 
   return (
-    <form className="expense-form" onSubmit={handleSubmit}>
+<form className="add-expense-form" onSubmit={handleSubmit}>
       <input
         type="text"
         placeholder="Description"

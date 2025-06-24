@@ -52,4 +52,6 @@ const Login = () => {
   );
 };
 
+document.body.classList.add('login-page');
+
 export default Login;

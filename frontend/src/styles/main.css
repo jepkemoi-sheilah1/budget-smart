@@ -284,14 +284,14 @@
 
 .add-expense-form {
   display: flex;
+  flex-direction: column;
   gap: 10px;
   max-width: 600px;
   margin: 0 auto;
 }
 
 .add-expense-form input, .add-expense-form select {
-  flex: 1 1 150px;
-  min-width: 150px;
+  width: 100%;
   box-sizing: border-box;
   padding: 8px;
   border-radius: 6px;
@@ -322,6 +322,7 @@
   padding: 15px 0;
   position: fixed;
   bottom: 0;
+  left: 0;
   width: 100%;
   font-family: Arial, sans-serif;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
@@ -331,4 +332,63 @@
   gap: 20px;
   flex-wrap: wrap;
   z-index: 100;
+}
+
+/* Center login and register containers vertically and horizontally */
+.login-container, .register-container {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+  color: #1e293b;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 80vh;
+}
+
+/* Background color for login and register pages */
+body.login-page, body.register-page {
+  background-color: #e0f2fe;
+  min-height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .dashboard-main-content {
+    flex-direction: column;
+  }
+
+  .dashboard-aside {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .budget-total-row {
+    flex-direction: column;
+  }
+
+  .budget-section, .total-expenses-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .add-expense-form {
+    max-width: 100%;
+    padding: 0 10px;
+  }
+
+  .login-container, .register-container {
+    max-width: 90%;
+    min-height: auto;
+    padding: 15px;
+  }
 }
