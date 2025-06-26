@@ -13,8 +13,8 @@ def seed_data():
         db.create_all()
 
         # Create users
-        user1 = User(username='alice', email='alice@example.com', password='password1')
-        user2 = User(username='bob', email='bob@example.com', password='password2')
+        user1 = User(username='jepkemoi shyllah', email='jepkemoishyllah@example.com', password='password1')
+        user2 = User(username='collins kiptoo', email='collinskiptoo@example.com', password='password2')
 
         db.session.add_all([user1, user2])
         db.session.commit()

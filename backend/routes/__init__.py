@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models.models import User, Budget, Category, Expense
 from datetime import datetime
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -27,6 +27,20 @@ def create_user():
     logging.basicConfig(level=logging.DEBUG)
     data = request.get_json()
     logging.debug(f"Received user creation data: {data}")
+
+    # Validate required fields
+    if not data.get('username') or not data.get('email') or not data.get('password'):
+        logging.error("Validation failed: Missing username, email, or password")
+        return jsonify({'error': 'Username, email, and password are required.'}), 400
+
+    # Check if username or email already exists
+    existing_user = User.query.filter(
+        (User.username == data['username']) | (User.email == data['email'])
+    ).first()
+    if existing_user:
+        logging.error("Validation failed: Username or email already exists")
+        return jsonify({'error': 'Username or email already exists.'}), 400
+
     try:
         hashed_password = generate_password_hash(data['password'])
         user = User(username=data['username'], email=data['email'], password=hashed_password)
@@ -35,7 +49,9 @@ def create_user():
         logging.debug(f"User created with id: {user.id}")
         return jsonify({'id': user.id, 'username': user.username, 'email': user.email}), 201
     except Exception as e:
+        import traceback
         logging.error(f"Error creating user: {e}")
+        logging.error(traceback.format_exc())
         return jsonify({'error': 'Failed to create user'}), 500
 
 @routes_bp.route('/users/<int:user_id>', methods=['PUT'])
@@ -54,6 +70,19 @@ def delete_user(user_id):
     db.session.delete(user)
     db.session.commit()
     return jsonify({'message': 'User deleted'})
+
+# Login route
+@routes_bp.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    if not data or not data.get('email') or not data.get('password'):
+        return jsonify({'error': 'Email and password are required.'}), 400
+
+    user = User.query.filter_by(email=data['email']).first()
+    if user and check_password_hash(user.password, data['password']):
+        return jsonify({'message': 'Login successful', 'user': {'id': user.id, 'username': user.username, 'email': user.email}})
+    else:
+        return jsonify({'error': 'Invalid email or password.'}), 401
 
 # Budget routes
 @routes_bp.route('/budgets', methods=['GET'])
