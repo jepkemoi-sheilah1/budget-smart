@@ -1,6 +1,10 @@
-from app import app, db
-from models.models import User, Budget, Category, Expense
+from backend.app import app, db
+from backend.models.models import User, Budget, Category, Expense
 from datetime import date
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def seed_data():
     with app.app_context():
