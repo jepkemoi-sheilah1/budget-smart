@@ -10,6 +10,9 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 from models import models
+from routes import routes_bp
+
+app.register_blueprint(routes_bp, url_prefix='/api')
 
 if __name__ == '__main__':
     app.run(debug=True)
