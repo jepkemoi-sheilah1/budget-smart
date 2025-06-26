@@ -1,9 +1,13 @@
 from flask import Blueprint, request, jsonify
-from app import db
+from extensions import db
 from models.models import User, Budget, Category, Expense
 from datetime import datetime
 
 routes_bp = Blueprint('routes', __name__)
+
+@routes_bp.route('/', methods=['GET'])
+def root():
+    return {"message": "Welcome to the Budget Smart API"}
 
 # User routes
 @routes_bp.route('/users', methods=['GET'])
