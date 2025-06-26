@@ -1,5 +1,5 @@
-from backend.app import app, db
-from backend.models.models import User, Budget, Category, Expense
+from app import app, db
+from models.models import User, Budget, Category, Expense
 from datetime import date
 import sys
 import os
