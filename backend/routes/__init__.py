@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from extensions import db
 from models.models import User, Budget, Category, Expense
 from datetime import datetime
+from werkzeug.security import generate_password_hash
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -22,11 +23,20 @@ def get_user(user_id):
 
 @routes_bp.route('/users', methods=['POST'])
 def create_user():
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     data = request.get_json()
-    user = User(username=data['username'], email=data['email'], password=data['password'])
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({'id': user.id, 'username': user.username, 'email': user.email}), 201
+    logging.debug(f"Received user creation data: {data}")
+    try:
+        hashed_password = generate_password_hash(data['password'])
+        user = User(username=data['username'], email=data['email'], password=hashed_password)
+        db.session.add(user)
+        db.session.commit()
+        logging.debug(f"User created with id: {user.id}")
+        return jsonify({'id': user.id, 'username': user.username, 'email': user.email}), 201
+    except Exception as e:
+        logging.error(f"Error creating user: {e}")
+        return jsonify({'error': 'Failed to create user'}), 500
 
 @routes_bp.route('/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
