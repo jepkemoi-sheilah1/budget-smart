@@ -1,64 +1,42 @@
 #!/usr/bin/env python3
 """
-Budget Smart Backend Server
+Budget Smart Backend Runner
 Run this script to start the Flask backend server
 """
 
-import subprocess
-import sys
 import os
+import sys
 
-def install_requirements():
-    """Install required packages"""
-    print("Installing required packages...")
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-        print("✅ Requirements installed successfully!")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Error installing requirements: {e}")
-        sys.exit(1)
+# Add the current directory to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-def run_server():
-    """Run the Flask server"""
-    print("Starting Budget Smart Backend Server...")
-    print("Server will be available at: http://localhost:5000")
-    print("Press Ctrl+C to stop the server")
+from app import create_app
+
+def main():
+    print("=" * 50)
+    print("🚀 Starting Budget Smart Backend Server")
+    print("=" * 50)
     
-    try:
-        # Import and run the Flask app
-        from app import create_app
-        from extensions import db
-        
-        app = create_app()
-        
-        # Initialize database
-        with app.app_context():
+    # Check if database exists
+    if not os.path.exists('budget_smart.db'):
+        print("📊 Creating database...")
+        with create_app().app_context():
+            from extensions import db
             db.create_all()
-            print("✅ Database initialized successfully!")
-        
-        # Run the server
-        app.run(debug=True, port=5000, host='0.0.0.0')
-        
-    except ImportError:
-        print("❌ Error: app.py not found in the current directory")
-        sys.exit(1)
+            print("✅ Database created successfully!")
+    
+    print(f"🌐 Server running at: http://localhost:5000")
+    print(f"🔗 API Health Check: http://localhost:5000/api/health")
+    print(f"👤 Admin Login: admin@gmail.com / 12345")
+    print("=" * 50)
+    
+    try:
+        create_app().run(debug=True, port=5000, host='0.0.0.0')
+    except KeyboardInterrupt:
+        print("\n👋 Server stopped by user")
     except Exception as e:
-        print(f"❌ Error starting server: {e}")
+        print(f"❌ Server error: {str(e)}")
         sys.exit(1)
 
-if __name__ == "__main__":
-    print("🚀 Budget Smart Backend Setup")
-    print("=" * 40)
-    
-    # Check if requirements.txt exists
-    if not os.path.exists("requirements.txt"):
-        print("❌ requirements.txt not found!")
-        sys.exit(1)
-    
-    # Install requirements
-    install_requirements()
-    
-    print("\n" + "=" * 40)
-    
-    # Run server
-    run_server()
+if __name__ == '__main__':
+    main()

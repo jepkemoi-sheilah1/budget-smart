@@ -2,67 +2,66 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Mail } from "lucide-react"
-import Link from "next/link"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { AlertCircle, CheckCircle, ArrowLeft } from "lucide-react"
 import { apiClient } from "@/lib/api"
 
-export default function ForgotPassword() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
-  const [message, setMessage] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!email) {
+      setError("Please enter your email address")
+      return
+    }
+
+    setIsLoading(true)
     setError("")
-    setMessage("")
-    setLoading(true)
 
     try {
-      await apiClient.forgotPassword(email)
-      setMessage("Password reset instructions have been sent to your email.")
-      setEmailSent(true)
-    } catch (err: any) {
-      setError(err.message || "Failed to send reset email")
+      const result = await apiClient.forgotPassword(email)
+
+      if (result.error) {
+        setError(result.error)
+      } else {
+        setSuccess(true)
+      }
+    } catch (error) {
+      setError("An unexpected error occurred. Please try again.")
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  if (emailSent) {
+  if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
+          <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <Mail className="w-6 h-6 text-green-600" />
+              <CheckCircle className="h-6 w-6 text-green-600" />
             </div>
-            <CardTitle className="text-2xl font-bold">Check your email</CardTitle>
-            <CardDescription>We've sent password reset instructions to {email}</CardDescription>
+            <CardTitle className="text-2xl font-bold">Check Your Email</CardTitle>
+            <CardDescription>
+              If an account with that email exists, we've sent you a password reset link.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center text-sm text-gray-600">
-              Didn't receive the email? Check your spam folder or{" "}
-              <button
-                onClick={() => {
-                  setEmailSent(false)
-                  setEmail("")
-                }}
-                className="text-blue-600 hover:underline"
-              >
-                try again
-              </button>
-            </div>
+          <CardContent className="text-center">
+            <p className="text-sm text-gray-600 mb-6">
+              Check your email and follow the instructions to reset your password.
+            </p>
             <Link href="/login">
-              <Button variant="outline" className="w-full bg-transparent">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to login
+              <Button className="w-full">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Login
               </Button>
             </Link>
           </CardContent>
@@ -72,55 +71,50 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="auth-container">
-        <Card className="auth-card">
-          <CardHeader className="space-y-1 gradient-header">
-            <CardTitle className="text-2xl font-bold text-center">Forgot password?</CardTitle>
-            <CardDescription className="text-center">
-              Enter your email address and we'll send you a link to reset your password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
+          <CardDescription className="text-center">
+            Enter your email address and we'll send you a link to reset your password.
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
             {error && (
-              <Alert className="mb-4 border-red-200 bg-red-50">
-                <AlertDescription className="text-red-800">{error}</AlertDescription>
-              </Alert>
-            )}
-
-            {message && (
-              <Alert className="mb-4 border-green-200 bg-green-50">
-                <AlertDescription className="text-green-800">{message}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+              <div className="flex items-center gap-2 text-red-600 text-sm bg-red-50 p-3 rounded-md">
+                <AlertCircle className="h-4 w-4" />
+                {error}
               </div>
+            )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending..." : "Send reset instructions"}
-              </Button>
-            </form>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email Address
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+                required
+              />
+            </div>
 
-            <div className="mt-4 text-center">
-              <Link href="/login" className="text-sm text-blue-600 hover:underline flex items-center justify-center">
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Back to login
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Send Reset Link"}
+            </Button>
+
+            <div className="text-center">
+              <Link href="/login" className="text-sm text-blue-600 hover:underline">
+                Back to Login
               </Link>
             </div>
           </CardContent>
-        </Card>
-      </div>
+        </form>
+      </Card>
     </div>
   )
 }
