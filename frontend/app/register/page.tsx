@@ -32,9 +32,20 @@ export default function RegisterPage() {
       return
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      setLoading(false)
+      return
+    }
+
     try {
       const response = await authAPI.register(username, email, password)
-      console.log("Registration successful:", response)
+
+      // Store token and user data
+      localStorage.setItem("token", response.access_token)
+      localStorage.setItem("user", JSON.stringify(response.user))
+
+      // Redirect to dashboard
       router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed")
@@ -48,9 +59,7 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create Account</CardTitle>
-          <CardDescription className="text-center">
-            Sign up for Budget Smart to start managing your finances
-          </CardDescription>
+          <CardDescription className="text-center">Enter your information to create a new account</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -69,6 +78,8 @@ export default function RegisterPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
+                disabled={loading}
+                minLength={3}
               />
             </div>
 
@@ -81,6 +92,7 @@ export default function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
@@ -93,6 +105,8 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
+                minLength={6}
               />
             </div>
 
@@ -105,21 +119,23 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
+                disabled={loading}
+                minLength={6}
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create account"}
+              {loading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600">
               Already have an account?{" "}
               <Link href="/login" className="text-blue-600 hover:text-blue-500">
                 Sign in
               </Link>
-            </p>
+            </div>
           </div>
         </CardContent>
       </Card>

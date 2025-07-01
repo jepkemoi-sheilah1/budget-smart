@@ -18,7 +18,7 @@ const Login = ({ onLogin }) => {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch("http://127.0.0.1:5000/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -29,7 +29,9 @@ const Login = ({ onLogin }) => {
       const data = await response.json()
 
       if (response.ok) {
-        onLogin(data.user, data.token)
+        // Store token in localStorage
+        localStorage.setItem("token", data.access_token)
+        onLogin(data.user, data.access_token)
       } else {
         setError(data.error || "Login failed")
       }
@@ -107,6 +109,17 @@ const Login = ({ onLogin }) => {
                 Sign up
               </Link>
             </div>
+          </div>
+
+          {/* Demo credentials info */}
+          <div className="demo-info">
+            <h4>Demo Credentials:</h4>
+            <p>
+              <strong>Email:</strong> admin@gmail.com
+            </p>
+            <p>
+              <strong>Password:</strong> 12345
+            </p>
           </div>
         </div>
       </div>

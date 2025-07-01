@@ -1,100 +1,89 @@
 "use client"
 
 import { useState } from "react"
+import "./Profile.css"
 
-const Profile = ({ user, setUser }) => {
-  const [activeTab, setActiveTab] = useState("profile")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-
-  // Profile form
-  const [profileForm, setProfileForm] = useState({
+const Profile = ({ user, token, onLogout }) => {
+  const [profile, setProfile] = useState({
     username: user?.username || "",
     email: user?.email || "",
   })
-
-  // Password form
-  const [passwordForm, setPasswordForm] = useState({
+  const [passwords, setPasswords] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deletePassword, setDeletePassword] = useState("")
 
-  const [showPasswords, setShowPasswords] = useState({
-    current: false,
-    new: false,
-    confirm: false,
-  })
-
-  const updateProfile = async (e) => {
+  const handleProfileUpdate = async (e) => {
     e.preventDefault()
     setError("")
     setSuccess("")
     setLoading(true)
 
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/user/profile", {
+      const response = await fetch("http://127.0.0.1:5000/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(profileForm),
+        body: JSON.stringify(profile),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess("Profile updated successfully")
-        setUser({ ...user, ...profileForm })
+        setSuccess("Profile updated successfully!")
       } else {
         setError(data.error || "Failed to update profile")
       }
     } catch (err) {
-      setError("Network error")
+      setError("Network error. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const changePassword = async (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault()
     setError("")
     setSuccess("")
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    if (passwords.newPassword !== passwords.confirmPassword) {
       setError("New passwords do not match")
       return
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      setError("Password must be at least 6 characters long")
+    if (passwords.newPassword.length < 6) {
+      setError("New password must be at least 6 characters long")
       return
     }
 
     setLoading(true)
 
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/user/change-password", {
+      const response = await fetch("http://127.0.0.1:5000/api/user/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword,
+          current_password: passwords.currentPassword,
+          new_password: passwords.newPassword,
         }),
       })
 
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess("Password changed successfully")
-        setPasswordForm({
+        setSuccess("Password changed successfully!")
+        setPasswords({
           currentPassword: "",
           newPassword: "",
           confirmPassword: "",
@@ -103,292 +92,223 @@ const Profile = ({ user, setUser }) => {
         setError(data.error || "Failed to change password")
       }
     } catch (err) {
-      setError("Network error")
+      setError("Network error. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  const exportData = async () => {
+  const handleExportData = async () => {
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/user/export-data", {
+      const response = await fetch("http://127.0.0.1:5000/api/user/export-data", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        const blob = await response.blob()
-        const url = window.URL.createObjectURL(blob)
+        // Create and download JSON file
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })
+        const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
         a.download = `budget-smart-data-${new Date().toISOString().split("T")[0]}.json`
         document.body.appendChild(a)
         a.click()
-        window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        setSuccess("Data exported successfully")
+        URL.revokeObjectURL(url)
+        setSuccess("Data exported successfully!")
       } else {
-        setError("Failed to export data")
+        setError(data.error || "Failed to export data")
       }
     } catch (err) {
-      setError("Network error")
+      setError("Failed to export data")
     }
   }
 
-  const deleteAccount = async () => {
-    if (!window.confirm("Are you sure you want to delete your account? This action cannot be undone.")) {
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) {
+      setError("Please enter your password to confirm account deletion")
       return
     }
 
+    setLoading(true)
+
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/user/delete-account", {
+      const response = await fetch("http://127.0.0.1:5000/api/user/delete-account", {
         method: "DELETE",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        body: JSON.stringify({ password: deletePassword }),
       })
 
+      const data = await response.json()
+
       if (response.ok) {
-        localStorage.removeItem("token")
-        window.location.href = "/login"
+        alert("Account deleted successfully")
+        onLogout()
       } else {
-        setError("Failed to delete account")
+        setError(data.error || "Failed to delete account")
       }
     } catch (err) {
-      setError("Network error")
+      setError("Failed to delete account")
+    } finally {
+      setLoading(false)
+      setShowDeleteConfirm(false)
+      setDeletePassword("")
     }
   }
 
   return (
-    <div className="profile-page">
-      <div className="container">
-        <div className="profile-header">
-          <div className="profile-avatar">{user?.username?.charAt(0).toUpperCase() || "U"}</div>
-          <div className="profile-info">
-            <h1>{user?.username}</h1>
-            <p>{user?.email}</p>
-            <span className="join-date">
-              Joined {user?.created_at ? new Date(user.created_at).toLocaleDateString() : "Recently"}
-            </span>
+    <div className="profile-container">
+      <div className="profile-header">
+        <h1>Profile Settings</h1>
+        <p>Manage your account information and preferences</p>
+      </div>
+
+      {error && <div className="alert alert-danger">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
+
+      <div className="profile-sections">
+        {/* Profile Information */}
+        <div className="profile-section">
+          <h2>Profile Information</h2>
+          <form onSubmit={handleProfileUpdate} className="profile-form">
+            <div className="form-group">
+              <label htmlFor="username">Username</label>
+              <input
+                id="username"
+                type="text"
+                className="form-input"
+                value={profile.username}
+                onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                className="form-input"
+                value={profile.email}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? "Updating..." : "Update Profile"}
+            </button>
+          </form>
+        </div>
+
+        {/* Change Password */}
+        <div className="profile-section">
+          <h2>Change Password</h2>
+          <form onSubmit={handlePasswordChange} className="profile-form">
+            <div className="form-group">
+              <label htmlFor="currentPassword">Current Password</label>
+              <input
+                id="currentPassword"
+                type="password"
+                className="form-input"
+                value={passwords.currentPassword}
+                onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="newPassword">New Password</label>
+              <input
+                id="newPassword"
+                type="password"
+                className="form-input"
+                value={passwords.newPassword}
+                onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="confirmPassword">Confirm New Password</label>
+              <input
+                id="confirmPassword"
+                type="password"
+                className="form-input"
+                value={passwords.confirmPassword}
+                onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
+                required
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? "Changing..." : "Change Password"}
+            </button>
+          </form>
+        </div>
+
+        {/* Data Management */}
+        <div className="profile-section">
+          <h2>Data Management</h2>
+          <div className="data-actions">
+            <button className="btn btn-secondary" onClick={handleExportData}>
+              Export My Data
+            </button>
+            <p className="help-text">Download all your financial data as a JSON file</p>
           </div>
         </div>
 
-        {error && <div className="alert alert-danger">{error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
-
-        <div className="profile-content">
-          <div className="profile-sidebar">
-            <div className="profile-nav">
-              <button
-                className={`nav-item ${activeTab === "profile" ? "active" : ""}`}
-                onClick={() => setActiveTab("profile")}
-              >
-                👤 Profile Information
-              </button>
-              <button
-                className={`nav-item ${activeTab === "security" ? "active" : ""}`}
-                onClick={() => setActiveTab("security")}
-              >
-                🔒 Security
-              </button>
-              <button
-                className={`nav-item ${activeTab === "data" ? "active" : ""}`}
-                onClick={() => setActiveTab("data")}
-              >
-                📊 Data Management
-              </button>
-              <button
-                className={`nav-item ${activeTab === "danger" ? "active" : ""}`}
-                onClick={() => setActiveTab("danger")}
-              >
-                ⚠️ Danger Zone
-              </button>
-            </div>
-          </div>
-
-          <div className="profile-main">
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <div className="card">
-                <div className="card-header">
-                  <h2>Profile Information</h2>
-                  <p>Update your account profile information</p>
-                </div>
-                <div className="card-body">
-                  <form onSubmit={updateProfile} className="profile-form">
-                    <div className="form-group">
-                      <label htmlFor="username" className="form-label">
-                        Username
-                      </label>
-                      <input
-                        id="username"
-                        type="text"
-                        className="form-input"
-                        value={profileForm.username}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, username: e.target.value }))}
-                        required
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="email" className="form-label">
-                        Email Address
-                      </label>
-                      <input
-                        id="email"
-                        type="email"
-                        className="form-input"
-                        value={profileForm.email}
-                        onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))}
-                        required
-                      />
-                    </div>
-
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                      {loading ? "Saving..." : "Save Changes"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Security Tab */}
-            {activeTab === "security" && (
-              <div className="card">
-                <div className="card-header">
-                  <h2>Change Password</h2>
-                  <p>Update your password to keep your account secure</p>
-                </div>
-                <div className="card-body">
-                  <form onSubmit={changePassword} className="password-form">
-                    <div className="form-group">
-                      <label htmlFor="currentPassword" className="form-label">
-                        Current Password
-                      </label>
-                      <div className="password-input">
-                        <input
-                          id="currentPassword"
-                          type={showPasswords.current ? "text" : "password"}
-                          className="form-input"
-                          value={passwordForm.currentPassword}
-                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, currentPassword: e.target.value }))}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle"
-                          onClick={() => setShowPasswords((prev) => ({ ...prev, current: !prev.current }))}
-                        >
-                          {showPasswords.current ? "👁️" : "👁️‍🗨️"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="newPassword" className="form-label">
-                        New Password
-                      </label>
-                      <div className="password-input">
-                        <input
-                          id="newPassword"
-                          type={showPasswords.new ? "text" : "password"}
-                          className="form-input"
-                          value={passwordForm.newPassword}
-                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, newPassword: e.target.value }))}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle"
-                          onClick={() => setShowPasswords((prev) => ({ ...prev, new: !prev.new }))}
-                        >
-                          {showPasswords.new ? "👁️" : "👁️‍🗨️"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="confirmPassword" className="form-label">
-                        Confirm New Password
-                      </label>
-                      <div className="password-input">
-                        <input
-                          id="confirmPassword"
-                          type={showPasswords.confirm ? "text" : "password"}
-                          className="form-input"
-                          value={passwordForm.confirmPassword}
-                          onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                          required
-                        />
-                        <button
-                          type="button"
-                          className="password-toggle"
-                          onClick={() => setShowPasswords((prev) => ({ ...prev, confirm: !prev.confirm }))}
-                        >
-                          {showPasswords.confirm ? "👁️" : "👁️‍🗨️"}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                      {loading ? "Changing..." : "Change Password"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {/* Data Tab */}
-            {activeTab === "data" && (
-              <div className="card">
-                <div className="card-header">
-                  <h2>Data Management</h2>
-                  <p>Export or manage your personal data</p>
-                </div>
-                <div className="card-body">
-                  <div className="data-section">
-                    <div className="data-item">
-                      <div className="data-info">
-                        <h3>Export Data</h3>
-                        <p>Download all your expenses and budget data as a JSON file</p>
-                      </div>
-                      <button onClick={exportData} className="btn btn-secondary">
-                        📥 Export Data
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Danger Zone Tab */}
-            {activeTab === "danger" && (
-              <div className="card danger-card">
-                <div className="card-header">
-                  <h2>Danger Zone</h2>
-                  <p>Irreversible and destructive actions</p>
-                </div>
-                <div className="card-body">
-                  <div className="danger-section">
-                    <div className="danger-item">
-                      <div className="danger-info">
-                        <h3>Delete Account</h3>
-                        <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
-                      </div>
-                      <button onClick={deleteAccount} className="btn btn-danger">
-                        🗑️ Delete Account
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Danger Zone */}
+        <div className="profile-section danger-zone">
+          <h2>Danger Zone</h2>
+          <div className="danger-actions">
+            <button className="btn btn-danger" onClick={() => setShowDeleteConfirm(true)}>
+              Delete Account
+            </button>
+            <p className="help-text">Permanently delete your account and all associated data</p>
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Delete Account</h3>
+              <button className="modal-close" onClick={() => setShowDeleteConfirm(false)}>
+                ×
+              </button>
+            </div>
+            <div className="modal-content">
+              <p>
+                <strong>Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+              </p>
+              <div className="form-group">
+                <label htmlFor="deletePassword">Enter your password to confirm:</label>
+                <input
+                  id="deletePassword"
+                  type="password"
+                  className="form-input"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Enter your password"
+                />
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={() => setShowDeleteConfirm(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-danger" onClick={handleDeleteAccount} disabled={loading}>
+                {loading ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

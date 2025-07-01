@@ -26,7 +26,12 @@ export default function LoginPage() {
 
     try {
       const response = await authAPI.login(email, password)
-      console.log("Login successful:", response)
+
+      // Store token and user data
+      localStorage.setItem("token", response.access_token)
+      localStorage.setItem("user", JSON.stringify(response.user))
+
+      // Redirect to dashboard
       router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
@@ -39,8 +44,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Budget Smart</CardTitle>
-          <CardDescription className="text-center">Sign in to your account to manage your finances</CardDescription>
+          <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
+          <CardDescription className="text-center">
+            Enter your email and password to access your account
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,6 +66,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
@@ -71,6 +79,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={loading}
               />
             </div>
 
@@ -80,24 +89,15 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 text-center space-y-2">
-            <p className="text-sm text-gray-600">
+            <Link href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+              Forgot your password?
+            </Link>
+            <div className="text-sm text-gray-600">
               Don't have an account?{" "}
               <Link href="/register" className="text-blue-600 hover:text-blue-500">
                 Sign up
               </Link>
-            </p>
-            <p className="text-sm">
-              <Link href="/forgot-password" className="text-blue-600 hover:text-blue-500">
-                Forgot your password?
-              </Link>
-            </p>
-          </div>
-
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm font-medium text-blue-800">Demo Account:</p>
-            <p className="text-sm text-blue-600">Email: admin@gmail.com</p>
-            <p className="text-sm text-blue-600">Password: 12345</p>
-          </div>
+            </div>
         </CardContent>
       </Card>
     </div>

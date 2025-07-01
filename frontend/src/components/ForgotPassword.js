@@ -8,7 +8,6 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -17,7 +16,7 @@ const ForgotPassword = () => {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
+      const response = await fetch("http://127.0.0.1:5000/api/auth/forgot-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -28,8 +27,7 @@ const ForgotPassword = () => {
       const data = await response.json()
 
       if (response.ok) {
-        setMessage("Password reset instructions have been sent to your email.")
-        setEmailSent(true)
+        setMessage("If an account with that email exists, a password reset link has been sent.")
       } else {
         setError(data.error || "Failed to send reset email")
       }
@@ -40,55 +38,20 @@ const ForgotPassword = () => {
     }
   }
 
-  if (emailSent) {
-    return (
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <div className="success-icon">✉️</div>
-            <h1 className="auth-title">Check your email</h1>
-            <p className="auth-subtitle">We've sent password reset instructions to {email}</p>
-          </div>
-
-          <div className="auth-form">
-            <div className="alert alert-success">{message}</div>
-
-            <div className="auth-links">
-              <p>Didn't receive the email? Check your spam folder or</p>
-              <button
-                onClick={() => {
-                  setEmailSent(false)
-                  setEmail("")
-                  setMessage("")
-                }}
-                className="auth-link"
-              >
-                try again
-              </button>
-            </div>
-
-            <Link to="/login" className="btn btn-secondary btn-lg">
-              ← Back to login
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="auth-container">
       <div className="auth-card">
         <div className="auth-header">
           <div className="auth-logo">
             <div className="logo-icon">$</div>
-            <h1 className="auth-title">Forgot Password?</h1>
+            <h1 className="auth-title">Budget Smart</h1>
           </div>
-          <p className="auth-subtitle">Enter your email address and we'll send you a link to reset your password</p>
+          <p className="auth-subtitle">Reset your password</p>
         </div>
 
         <div className="auth-form">
           {error && <div className="alert alert-danger">{error}</div>}
+          {message && <div className="alert alert-success">{message}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="form-group">
@@ -103,18 +66,17 @@ const ForgotPassword = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                autoComplete="email"
               />
             </div>
 
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              {loading ? "Sending..." : "Send Reset Instructions"}
+              {loading ? "Sending..." : "Send Reset Link"}
             </button>
           </form>
 
           <div className="auth-links">
             <Link to="/login" className="auth-link">
-              ← Back to login
+              Back to Sign In
             </Link>
           </div>
         </div>

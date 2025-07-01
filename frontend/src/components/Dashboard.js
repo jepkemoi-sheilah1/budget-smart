@@ -1,27 +1,67 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts"
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts"
+import "./Dashboard.css"
 
-const Dashboard = ({ user }) => {
+const Dashboard = ({ user, token }) => {
   const [expenses, setExpenses] = useState([])
-  const [budgets, setBudgets] = useState({})
+  const [budgets, setBudgets] = useState([])
+  const [analytics, setAnalytics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [showAddExpense, setShowAddExpense] = useState(false)
+  const [showAddBudget, setShowAddBudget] = useState(false)
   const [newExpense, setNewExpense] = useState({
     description: "",
     amount: "",
-    category: "Housing",
+    category: "",
     date: new Date().toISOString().split("T")[0],
   })
-  const [budgetForm, setBudgetForm] = useState({
-    category: "Housing",
+  const [newBudget, setNewBudget] = useState({
+    category: "",
     amount: "",
+    month: new Date().getMonth() + 1,
+    year: new Date().getFullYear(),
   })
-  const [filterCategory, setFilterCategory] = useState("All")
 
-  const CATEGORIES = ["Housing", "Food", "Transportation", "Entertainment", "Healthcare", "Shopping"]
-  const COLORS = ["#2563eb", "#7c3aed", "#dc2626", "#ea580c", "#059669", "#d97706"]
+  const categories = [
+    "Food",
+    "Transportation",
+    "Housing",
+    "Entertainment",
+    "Healthcare",
+    "Shopping",
+    "Utilities",
+    "Education",
+    "Travel",
+    "Other",
+  ]
+
+  const COLORS = [
+    "#0088FE",
+    "#00C49F",
+    "#FFBB28",
+    "#FF8042",
+    "#8884D8",
+    "#82CA9D",
+    "#FFC658",
+    "#FF7C7C",
+    "#8DD1E1",
+    "#D084D0",
+  ]
 
   useEffect(() => {
     fetchData()
@@ -29,364 +69,313 @@ const Dashboard = ({ user }) => {
 
   const fetchData = async () => {
     try {
-      const token = localStorage.getItem("token")
+      setLoading(true)
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      }
 
       // Fetch expenses
-      const expensesResponse = await fetch("/api/expenses", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const expensesResponse = await fetch("http://127.0.0.1:5000/api/expenses", { headers })
+      const expensesData = await expensesResponse.json()
 
       // Fetch budgets
-      const budgetsResponse = await fetch("/api/budgets", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const budgetsResponse = await fetch("http://127.0.0.1:5000/api/budgets", { headers })
+      const budgetsData = await budgetsResponse.json()
 
-      if (expensesResponse.ok && budgetsResponse.ok) {
-        const expensesData = await expensesResponse.json()
-        const budgetsData = await budgetsResponse.json()
+      // Fetch analytics
+      const analyticsResponse = await fetch("http://127.0.0.1:5000/api/analytics/summary", { headers })
+      const analyticsData = await analyticsResponse.json()
 
-        setExpenses(expensesData)
-        setBudgets(budgetsData)
-      } else {
-        setError("Failed to load data")
-      }
+      if (expensesResponse.ok) setExpenses(expensesData.expenses || [])
+      if (budgetsResponse.ok) setBudgets(budgetsData.budgets || [])
+      if (analyticsResponse.ok) setAnalytics(analyticsData)
     } catch (err) {
-      setError("Network error")
+      setError("Failed to load dashboard data")
     } finally {
       setLoading(false)
     }
   }
 
-  const addExpense = async (e) => {
+  const handleAddExpense = async (e) => {
     e.preventDefault()
-    if (!newExpense.description || !newExpense.amount) return
-
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/expenses", {
+      const response = await fetch("http://127.0.0.1:5000/api/expenses", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          description: newExpense.description,
+          ...newExpense,
           amount: Number.parseFloat(newExpense.amount),
-          category: newExpense.category,
-          date: newExpense.date,
         }),
       })
 
       if (response.ok) {
-        const newExpenseData = await response.json()
-        setExpenses((prev) => [newExpenseData, ...prev])
         setNewExpense({
           description: "",
           amount: "",
-          category: "Housing",
+          category: "",
           date: new Date().toISOString().split("T")[0],
         })
+        setShowAddExpense(false)
+        fetchData()
+      } else {
+        const data = await response.json()
+        setError(data.error || "Failed to add expense")
       }
     } catch (err) {
       setError("Failed to add expense")
     }
   }
 
-  const updateBudget = async (e) => {
+  const handleAddBudget = async (e) => {
     e.preventDefault()
-    if (!budgetForm.amount) return
-
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch("/api/budgets", {
+      const response = await fetch("http://127.0.0.1:5000/api/budgets", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          category: budgetForm.category,
-          amount: Number.parseFloat(budgetForm.amount),
+          ...newBudget,
+          amount: Number.parseFloat(newBudget.amount),
         }),
       })
 
       if (response.ok) {
-        setBudgets((prev) => ({
-          ...prev,
-          [budgetForm.category]: Number.parseFloat(budgetForm.amount),
-        }))
-        setBudgetForm({ category: "Housing", amount: "" })
+        setNewBudget({
+          category: "",
+          amount: "",
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        })
+        setShowAddBudget(false)
+        fetchData()
+      } else {
+        const data = await response.json()
+        setError(data.error || "Failed to add budget")
       }
     } catch (err) {
-      setError("Failed to update budget")
+      setError("Failed to add budget")
     }
   }
 
-  const deleteExpense = async (id) => {
-    try {
-      const token = localStorage.getItem("token")
-      const response = await fetch(`/api/expenses/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      })
+  const handleDeleteExpense = async (id) => {
+    if (window.confirm("Are you sure you want to delete this expense?")) {
+      try {
+        const response = await fetch(`http://127.0.0.1:5000/api/expenses/${id}`, {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
 
-      if (response.ok) {
-        setExpenses((prev) => prev.filter((exp) => exp.id !== id))
+        if (response.ok) {
+          fetchData()
+        } else {
+          setError("Failed to delete expense")
+        }
+      } catch (err) {
+        setError("Failed to delete expense")
       }
-    } catch (err) {
-      setError("Failed to delete expense")
     }
   }
-
-  // Calculate totals
-  const totalSpent = expenses.reduce((total, expense) => total + expense.amount, 0)
-  const totalBudget = Object.values(budgets).reduce((total, amount) => total + amount, 0)
-  const remaining = totalBudget - totalSpent
-
-  // Calculate spending per category
-  const spentPerCategory = expenses.reduce((acc, expense) => {
-    acc[expense.category] = (acc[expense.category] || 0) + expense.amount
-    return acc
-  }, {})
-
-  // Filter expenses
-  const filteredExpenses = expenses.filter((expense) => filterCategory === "All" || expense.category === filterCategory)
-
-  // Chart data
-  const pieData = CATEGORIES.map((category, index) => ({
-    name: category,
-    value: spentPerCategory[category] || 0,
-    color: COLORS[index],
-  })).filter((item) => item.value > 0)
-
-  const barData = CATEGORIES.map((category, index) => ({
-    name: category,
-    budget: budgets[category] || 0,
-    spent: spentPerCategory[category] || 0,
-    color: COLORS[index],
-  }))
 
   if (loading) {
     return (
-      <div className="dashboard-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading your financial dashboard...</p>
+      <div className="dashboard-container">
+        <div className="loading-spinner">Loading dashboard...</div>
       </div>
     )
   }
 
   return (
-    <div className="dashboard">
-      <div className="container">
-        {/* Header */}
-        <div className="dashboard-header">
-          <h1>Welcome back, {user?.username}! 👋</h1>
-          <p>Here's your financial overview for this month</p>
-        </div>
+    <div className="dashboard-container">
+      <div className="dashboard-header">
+        <h1>Welcome back, {user?.username}!</h1>
+        <p>Here's your financial overview</p>
+      </div>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+      {error && <div className="alert alert-danger">{error}</div>}
 
-        {/* Overview Cards */}
-        <div className="overview-grid">
-          <div className="overview-card budget-card">
-            <div className="card-icon">💰</div>
-            <div className="card-content">
-              <h3>Total Budget</h3>
-              <p className="amount">${totalBudget.toFixed(2)}</p>
-              <span className="subtitle">Monthly allocation</span>
-            </div>
-          </div>
-
-          <div className="overview-card spent-card">
-            <div className="card-icon">📊</div>
-            <div className="card-content">
-              <h3>Total Spent</h3>
-              <p className="amount">${totalSpent.toFixed(2)}</p>
-              <span className="subtitle">This month</span>
-            </div>
-          </div>
-
-          <div className="overview-card remaining-card">
-            <div className="card-icon">💵</div>
-            <div className="card-content">
-              <h3>Remaining</h3>
-              <p className="amount">${remaining.toFixed(2)}</p>
-              <span className="subtitle">Available to spend</span>
-            </div>
+      {/* Summary Cards */}
+      <div className="summary-cards">
+        <div className="summary-card">
+          <div className="card-icon">💰</div>
+          <div className="card-content">
+            <h3>Total Expenses</h3>
+            <p className="card-amount">${analytics?.total_expenses?.toFixed(2) || "0.00"}</p>
           </div>
         </div>
-
-        {/* Budget Alert */}
-        {totalSpent >= 0.9 * totalBudget && totalBudget > 0 && (
-          <div className="alert alert-warning">
-            ⚠️ Warning: You're close to exceeding your budget! You've spent ${totalSpent.toFixed(2)} of your $
-            {totalBudget.toFixed(2)} budget.
+        <div className="summary-card">
+          <div className="card-icon">🎯</div>
+          <div className="card-content">
+            <h3>Total Budget</h3>
+            <p className="card-amount">${analytics?.total_budget?.toFixed(2) || "0.00"}</p>
           </div>
+        </div>
+        <div className="summary-card">
+          <div className="card-icon">📊</div>
+          <div className="card-content">
+            <h3>Remaining Budget</h3>
+            <p className={`card-amount ${analytics?.remaining_budget < 0 ? "negative" : ""}`}>
+              ${analytics?.remaining_budget?.toFixed(2) || "0.00"}
+            </p>
+          </div>
+        </div>
+        <div className="summary-card">
+          <div className="card-icon">📝</div>
+          <div className="card-content">
+            <h3>Total Transactions</h3>
+            <p className="card-amount">{analytics?.expense_count || 0}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="charts-section">
+        <div className="chart-container">
+          <h3>Expense Categories</h3>
+          {analytics?.category_breakdown?.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={analytics.category_breakdown}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ category, amount }) => `${category}: $${amount.toFixed(2)}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="amount"
+                >
+                  {analytics.category_breakdown.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="no-data">No expense data available</div>
+          )}
+        </div>
+
+        <div className="chart-container">
+          <h3>Budget vs Actual</h3>
+          {budgets.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={budgets}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="category" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="amount" fill="#8884d8" name="Budget" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="no-data">No budget data available</div>
+          )}
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <button className="btn btn-primary" onClick={() => setShowAddExpense(true)}>
+          Add Expense
+        </button>
+        <button className="btn btn-secondary" onClick={() => setShowAddBudget(true)}>
+          Set Budget
+        </button>
+      </div>
+
+      {/* Recent Expenses */}
+      <div className="recent-expenses">
+        <h3>Recent Expenses</h3>
+        {expenses.length > 0 ? (
+          <div className="expenses-list">
+            {expenses.slice(0, 5).map((expense) => (
+              <div key={expense.id} className="expense-item">
+                <div className="expense-info">
+                  <h4>{expense.description}</h4>
+                  <p>
+                    {expense.category} • {expense.date}
+                  </p>
+                </div>
+                <div className="expense-amount">${expense.amount.toFixed(2)}</div>
+                <button className="btn-delete" onClick={() => handleDeleteExpense(expense.id)}>
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="no-data">No expenses found</div>
         )}
+      </div>
 
-        <div className="dashboard-grid">
-          {/* Budget Management */}
-          <div className="card">
-            <div className="card-header">
-              <h2>Set Monthly Budget</h2>
-              <p>Set your spending limits for each category</p>
+      {/* Add Expense Modal */}
+      {showAddExpense && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Add New Expense</h3>
+              <button className="modal-close" onClick={() => setShowAddExpense(false)}>
+                ×
+              </button>
             </div>
-            <div className="card-body">
-              <form onSubmit={updateBudget} className="budget-form">
-                <div className="form-row">
-                  <select
-                    value={budgetForm.category}
-                    onChange={(e) => setBudgetForm((prev) => ({ ...prev, category: e.target.value }))}
-                    className="form-input"
-                  >
-                    {CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    placeholder="Amount"
-                    value={budgetForm.amount}
-                    onChange={(e) => setBudgetForm((prev) => ({ ...prev, amount: e.target.value }))}
-                    className="form-input"
-                    step="0.01"
-                  />
-                  <button type="submit" className="btn btn-primary">
-                    Set Budget
-                  </button>
-                </div>
-              </form>
-
-              <div className="budget-list">
-                {CATEGORIES.map((category, index) => {
-                  const budget = budgets[category] || 0
-                  const spent = spentPerCategory[category] || 0
-                  const percentage = budget > 0 ? (spent / budget) * 100 : 0
-
-                  return (
-                    <div key={category} className="budget-item">
-                      <div className="budget-info">
-                        <span className="category-name" style={{ color: COLORS[index] }}>
-                          {category}
-                        </span>
-                        <div className="budget-amounts">
-                          <span className="spent">${spent.toFixed(2)}</span>
-                          <span className="separator">/</span>
-                          <span className="budget">${budget.toFixed(2)}</span>
-                        </div>
-                      </div>
-                      <div className="progress-bar">
-                        <div
-                          className="progress-fill"
-                          style={{
-                            width: `${Math.min(percentage, 100)}%`,
-                            backgroundColor: COLORS[index],
-                          }}
-                        ></div>
-                      </div>
-                      <span className="percentage">{percentage.toFixed(1)}%</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Charts */}
-          <div className="card">
-            <div className="card-header">
-              <h2>Financial Overview</h2>
-            </div>
-            <div className="card-body">
-              <div className="chart-tabs">
-                <div className="chart-section">
-                  <h3>Spending Distribution</h3>
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          dataKey="value"
-                          nameKey="name"
-                          cx="50%"
-                          cy="50%"
-                          outerRadius={80}
-                          label={({ name, value }) => `${name}: $${value.toFixed(0)}`}
-                        >
-                          {pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Amount"]} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                <div className="chart-section">
-                  <h3>Budget vs Spending</h3>
-                  <div className="chart-container">
-                    <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={barData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" />
-                        <YAxis />
-                        <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, ""]} />
-                        <Bar dataKey="budget" fill="#e5e7eb" name="Budget" />
-                        <Bar dataKey="spent" fill="#3b82f6" name="Spent" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Add Expense */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Add New Expense</h2>
-          </div>
-          <div className="card-body">
-            <form onSubmit={addExpense} className="expense-form">
-              <div className="form-grid">
+            <form onSubmit={handleAddExpense} className="modal-form">
+              <div className="form-group">
+                <label>Description</label>
                 <input
                   type="text"
-                  placeholder="Description"
                   value={newExpense.description}
-                  onChange={(e) => setNewExpense((prev) => ({ ...prev, description: e.target.value }))}
-                  className="form-input"
+                  onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
                   required
                 />
+              </div>
+              <div className="form-group">
+                <label>Amount</label>
                 <input
                   type="number"
-                  placeholder="Amount"
-                  value={newExpense.amount}
-                  onChange={(e) => setNewExpense((prev) => ({ ...prev, amount: e.target.value }))}
-                  className="form-input"
                   step="0.01"
+                  value={newExpense.amount}
+                  onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
                   required
                 />
+              </div>
+              <div className="form-group">
+                <label>Category</label>
                 <select
                   value={newExpense.category}
-                  onChange={(e) => setNewExpense((prev) => ({ ...prev, category: e.target.value }))}
-                  className="form-input"
+                  onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
+                  required
                 >
-                  {CATEGORIES.map((category) => (
+                  <option value="">Select Category</option>
+                  {categories.map((category) => (
                     <option key={category} value={category}>
                       {category}
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="form-group">
+                <label>Date</label>
                 <input
                   type="date"
                   value={newExpense.date}
-                  onChange={(e) => setNewExpense((prev) => ({ ...prev, date: e.target.value }))}
-                  className="form-input"
+                  onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
+                  required
                 />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddExpense(false)}>
+                  Cancel
+                </button>
                 <button type="submit" className="btn btn-primary">
                   Add Expense
                 </button>
@@ -394,55 +383,79 @@ const Dashboard = ({ user }) => {
             </form>
           </div>
         </div>
+      )}
 
-        {/* Expense List */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Recent Expenses</h2>
-            <div className="filter-section">
-              <select
-                value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value)}
-                className="form-input filter-select"
-              >
-                <option value="All">All Categories</option>
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+      {/* Add Budget Modal */}
+      {showAddBudget && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h3>Set Budget</h3>
+              <button className="modal-close" onClick={() => setShowAddBudget(false)}>
+                ×
+              </button>
             </div>
-          </div>
-          <div className="card-body">
-            <div className="expense-list">
-              {filteredExpenses.length === 0 ? (
-                <div className="empty-state">
-                  <p>No expenses found</p>
-                </div>
-              ) : (
-                filteredExpenses.map((expense) => (
-                  <div key={expense.id} className="expense-item">
-                    <div className="expense-info">
-                      <div className="expense-description">{expense.description}</div>
-                      <div className="expense-meta">
-                        <span className="expense-category">{expense.category}</span>
-                        <span className="expense-date">{expense.date}</span>
-                      </div>
-                    </div>
-                    <div className="expense-actions">
-                      <span className="expense-amount">${expense.amount.toFixed(2)}</span>
-                      <button onClick={() => deleteExpense(expense.id)} className="btn btn-danger btn-sm">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+            <form onSubmit={handleAddBudget} className="modal-form">
+              <div className="form-group">
+                <label>Category</label>
+                <select
+                  value={newBudget.category}
+                  onChange={(e) => setNewBudget({ ...newBudget, category: e.target.value })}
+                  required
+                >
+                  <option value="">Select Category</option>
+                  {categories.map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Amount</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newBudget.amount}
+                  onChange={(e) => setNewBudget({ ...newBudget, amount: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Month</label>
+                <select
+                  value={newBudget.month}
+                  onChange={(e) => setNewBudget({ ...newBudget, month: Number.parseInt(e.target.value) })}
+                  required
+                >
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                      {new Date(0, i).toLocaleString("default", { month: "long" })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Year</label>
+                <input
+                  type="number"
+                  value={newBudget.year}
+                  onChange={(e) => setNewBudget({ ...newBudget, year: Number.parseInt(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowAddBudget(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Set Budget
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

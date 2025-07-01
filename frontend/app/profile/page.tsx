@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,26 +9,40 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, User, Lock, AlertCircle, CheckCircle } from "lucide-react"
-import { apiClient } from "@/lib/api"
-import Link from "next/link"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { userAPI } from "@/lib/api"
+
+interface User {
+  id: number
+  username: string
+  email: string
+  created_at: string
+}
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isUpdating, setIsUpdating] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
-  const [formData, setFormData] = useState({
+
+  // Profile form
+  const [profileForm, setProfileForm] = useState({
     username: "",
     email: "",
   })
-  const [passwordData, setPasswordData] = useState({
+
+  // Password form
+  const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   })
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
+
+  // Delete account form
+  const [deleteForm, setDeleteForm] = useState({
+    password: "",
+    confirmDelete: false,
+  })
 
   const router = useRouter()
 
@@ -42,90 +57,119 @@ export default function ProfilePage() {
   }, [router])
 
   const loadProfile = async () => {
-    setIsLoading(true)
     try {
-      const result = await apiClient.getProfile()
-      if (result.data) {
-        setUser(result.data.user)
-        setFormData({
-          username: result.data.user.username,
-          email: result.data.user.email,
-        })
-      } else if (result.error) {
-        setError(result.error)
+      setLoading(true)
+      const response = await userAPI.getProfile()
+      setUser(response.user)
+      setProfileForm({
+        username: response.user.username,
+        email: response.user.email,
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load profile")
+      if (err instanceof Error && err.message.includes("401")) {
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+        router.push("/login")
       }
-    } catch (error) {
-      setError("Failed to load profile")
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsUpdating(true)
-    setError("")
-    setSuccess("")
-
     try {
-      const result = await apiClient.updateProfile(formData)
-      if (result.data) {
-        setUser(result.data.user)
-        setSuccess("Profile updated successfully!")
-        // Update localStorage
-        localStorage.setItem("user", JSON.stringify(result.data.user))
-      } else if (result.error) {
-        setError(result.error)
-      }
-    } catch (error) {
-      setError("Failed to update profile")
-    } finally {
-      setIsUpdating(false)
+      setError("")
+      setSuccess("")
+
+      const response = await userAPI.updateProfile(profileForm)
+      setUser(response.user)
+      localStorage.setItem("user", JSON.stringify(response.user))
+      setSuccess("Profile updated successfully")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update profile")
     }
   }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setError("New passwords do not match")
       return
     }
 
-    if (passwordData.newPassword.length < 5) {
-      setError("New password must be at least 5 characters long")
+    if (passwordForm.newPassword.length < 6) {
+      setError("New password must be at least 6 characters long")
       return
     }
 
-    setIsUpdating(true)
-    setError("")
-    setSuccess("")
-
     try {
-      const result = await apiClient.changePassword(passwordData.currentPassword, passwordData.newPassword)
-      if (result.data) {
-        setSuccess("Password changed successfully!")
-        setPasswordData({
-          currentPassword: "",
-          newPassword: "",
-          confirmPassword: "",
-        })
-        setShowPasswordForm(false)
-      } else if (result.error) {
-        setError(result.error)
-      }
-    } catch (error) {
-      setError("Failed to change password")
-    } finally {
-      setIsUpdating(false)
+      setError("")
+      setSuccess("")
+
+      await userAPI.changePassword(passwordForm.currentPassword, passwordForm.newPassword)
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      })
+      setSuccess("Password changed successfully")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change password")
     }
   }
 
-  if (isLoading) {
+  const handleExportData = async () => {
+    try {
+      setError("")
+      const response = await userAPI.exportData()
+
+      // Create and download JSON file
+      const dataStr = JSON.stringify(response, null, 2)
+      const dataBlob = new Blob([dataStr], { type: "application/json" })
+      const url = URL.createObjectURL(dataBlob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `budget-smart-data-${new Date().toISOString().split("T")[0]}.json`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setSuccess("Data exported successfully")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to export data")
+    }
+  }
+
+  const handleDeleteAccount = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!deleteForm.confirmDelete) {
+      setError("Please confirm account deletion")
+      return
+    }
+
+    try {
+      setError("")
+      await userAPI.deleteAccount(deleteForm.password)
+
+      // Clear local storage and redirect
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      router.push("/login")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete account")
+    }
+  }
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
         </div>
       </div>
@@ -133,153 +177,201 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="mb-4 bg-transparent">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Dashboard
-            </Button>
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-          <p className="text-gray-600 mt-2">Manage your account information and security settings.</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Profile Settings</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="outline" onClick={() => router.push("/dashboard")}>
+                Back to Dashboard
+              </Button>
+            </div>
+          </div>
         </div>
+      </header>
 
-        {/* Alerts */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-6">
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
         {success && (
-          <Alert className="mb-6 border-green-200 bg-green-50">
-            <CheckCircle className="h-4 w-4" />
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
+          <Alert className="mb-6">
+            <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
 
-        {/* Profile Information */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>Update your account details here.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  disabled={isUpdating}
-                  required
-                />
-              </div>
+        <Tabs defaultValue="profile" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="password">Password</TabsTrigger>
+            <TabsTrigger value="data">Data</TabsTrigger>
+            <TabsTrigger value="danger">Danger Zone</TabsTrigger>
+          </TabsList>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={isUpdating}
-                  required
-                />
-              </div>
+          <TabsContent value="profile">
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Update your account profile information</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleUpdateProfile} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={profileForm.username}
+                      onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
+                      required
+                      minLength={3}
+                    />
+                  </div>
 
-              <Button type="submit" disabled={isUpdating}>
-                {isUpdating ? "Updating..." : "Update Profile"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={profileForm.email}
+                      onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
 
-        {/* Password Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Lock className="h-5 w-5 mr-2" />
-              Password & Security
-            </CardTitle>
-            <CardDescription>Change your password to keep your account secure.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!showPasswordForm ? (
-              <Button onClick={() => setShowPasswordForm(true)} variant="outline">
-                Change Password
-              </Button>
-            ) : (
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Current Password</Label>
-                  <Input
-                    id="currentPassword"
-                    type="password"
-                    value={passwordData.currentPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                    disabled={isUpdating}
-                    required
-                  />
+                  {user && (
+                    <div className="space-y-2">
+                      <Label>Account Created</Label>
+                      <p className="text-sm text-gray-600">{new Date(user.created_at).toLocaleDateString()}</p>
+                    </div>
+                  )}
+
+                  <Button type="submit">Update Profile</Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="password">
+            <Card>
+              <CardHeader>
+                <CardTitle>Change Password</CardTitle>
+                <CardDescription>Update your account password</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Current Password</Label>
+                    <Input
+                      id="currentPassword"
+                      type="password"
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={passwordForm.newPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={passwordForm.confirmPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button type="submit">Change Password</Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="data">
+            <Card>
+              <CardHeader>
+                <CardTitle>Data Management</CardTitle>
+                <CardDescription>Export your data or manage your information</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium mb-2">Export Data</h3>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Download all your expenses, budgets, and profile information as a JSON file.
+                  </p>
+                  <Button onClick={handleExportData}>Export My Data</Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">New Password</Label>
-                  <Input
-                    id="newPassword"
-                    type="password"
-                    value={passwordData.newPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                    disabled={isUpdating}
-                    required
-                  />
-                </div>
+          <TabsContent value="danger">
+            <Card className="border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-600">Danger Zone</CardTitle>
+                <CardDescription>Permanently delete your account and all associated data</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleDeleteAccount} className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-800">
+                      <strong>Warning:</strong> This action cannot be undone. This will permanently delete your account
+                      and all associated data including expenses, budgets, and profile information.
+                    </p>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={passwordData.confirmPassword}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                    disabled={isUpdating}
-                    required
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="deletePassword">Enter your password to confirm</Label>
+                    <Input
+                      id="deletePassword"
+                      type="password"
+                      value={deleteForm.password}
+                      onChange={(e) => setDeleteForm({ ...deleteForm, password: e.target.value })}
+                      required
+                    />
+                  </div>
 
-                <div className="flex space-x-2">
-                  <Button type="submit" disabled={isUpdating}>
-                    {isUpdating ? "Changing..." : "Change Password"}
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="confirmDelete"
+                      checked={deleteForm.confirmDelete}
+                      onChange={(e) => setDeleteForm({ ...deleteForm, confirmDelete: e.target.checked })}
+                      className="rounded"
+                    />
+                    <Label htmlFor="confirmDelete" className="text-sm">
+                      I understand that this action cannot be undone
+                    </Label>
+                  </div>
+
+                  <Button type="submit" variant="destructive" disabled={!deleteForm.confirmDelete}>
+                    Delete Account
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowPasswordForm(false)
-                      setPasswordData({
-                        currentPassword: "",
-                        newPassword: "",
-                        confirmPassword: "",
-                      })
-                    }}
-                    disabled={isUpdating}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            )}
-          </CardContent>
-        </Card>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )

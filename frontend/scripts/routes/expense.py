@@ -6,11 +6,11 @@ from datetime import datetime, date
 
 expense_bp = Blueprint('expense', __name__)
 
-@expense_bp.route('', methods=['GET'])
+@expense_bp.route('/expenses', methods=['GET'])
 @jwt_required()
 def get_expenses():
     try:
-        current_user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
         
         # Get query parameters
         category = request.args.get('category')
@@ -19,18 +19,24 @@ def get_expenses():
         limit = request.args.get('limit', type=int)
         
         # Build query
-        query = Expense.query.filter_by(user_id=current_user_id)
+        query = Expense.query.filter_by(user_id=user_id)
         
         if category:
             query = query.filter_by(category=category)
         
         if start_date:
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            query = query.filter(Expense.date >= start_date)
+            try:
+                start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+                query = query.filter(Expense.date >= start_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
         
         if end_date:
-            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-            query = query.filter(Expense.date <= end_date)
+            try:
+                end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+                query = query.filter(Expense.date <= end_date_obj)
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
         
         # Order by date descending
         query = query.order_by(Expense.date.desc())
@@ -45,35 +51,46 @@ def get_expenses():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to get expenses'}), 500
 
-@expense_bp.route('', methods=['POST'])
+@expense_bp.route('/expenses', methods=['POST'])
 @jwt_required()
 def create_expense():
     try:
-        current_user_id = get_jwt_identity()
+        user_id = get_jwt_identity()
         data = request.get_json()
         
-        description = data.get('description')
+        description = data.get('description', '').strip()
         amount = data.get('amount')
-        category = data.get('category')
+        category = data.get('category', '').strip()
         expense_date = data.get('date')
         
-        if not all([description, amount, category]):
-            return jsonify({'error': 'Description, amount, and category are required'}), 400
+        # Validation
+        if not description:
+            return jsonify({'error': 'Description is required'}), 400
+        
+        if not amount or amount <= 0:
+            return jsonify({'error': 'Amount must be greater than 0'}), 400
+        
+        if not category:
+            return jsonify({'error': 'Category is required'}), 400
         
         # Parse date
         if expense_date:
-            expense_date = datetime.strptime(expense_date, '%Y-%m-%d').date()
+            try:
+                expense_date_obj = datetime.strptime(expense_date, '%Y-%m-%d').date()
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
         else:
-            expense_date = date.today()
+            expense_date_obj = date.today()
         
+        # Create expense
         expense = Expense(
-            user_id=current_user_id,
+            user_id=user_id,
             description=description,
-            amount=float(amount),
+            amount=amount,
             category=category,
-            date=expense_date
+            date=expense_date_obj
         )
         
         db.session.add(expense)
@@ -86,14 +103,14 @@ def create_expense():
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to create expense'}), 500
 
-@expense_bp.route('/<int:expense_id>', methods=['PUT'])
+@expense_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
 @jwt_required()
 def update_expense(expense_id):
     try:
-        current_user_id = get_jwt_identity()
-        expense = Expense.query.filter_by(id=expense_id, user_id=current_user_id).first()
+        user_id = get_jwt_identity()
+        expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first()
         
         if not expense:
             return jsonify({'error': 'Expense not found'}), 404
@@ -101,13 +118,29 @@ def update_expense(expense_id):
         data = request.get_json()
         
         if 'description' in data:
-            expense.description = data['description']
+            description = data['description'].strip()
+            if not description:
+                return jsonify({'error': 'Description cannot be empty'}), 400
+            expense.description = description
+        
         if 'amount' in data:
-            expense.amount = float(data['amount'])
+            amount = data['amount']
+            if not amount or amount <= 0:
+                return jsonify({'error': 'Amount must be greater than 0'}), 400
+            expense.amount = amount
+        
         if 'category' in data:
-            expense.category = data['category']
+            category = data['category'].strip()
+            if not category:
+                return jsonify({'error': 'Category cannot be empty'}), 400
+            expense.category = category
+        
         if 'date' in data:
-            expense.date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+            try:
+                expense_date_obj = datetime.strptime(data['date'], '%Y-%m-%d').date()
+                expense.date = expense_date_obj
+            except ValueError:
+                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
         
         db.session.commit()
         
@@ -118,14 +151,14 @@ def update_expense(expense_id):
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to update expense'}), 500
 
-@expense_bp.route('/<int:expense_id>', methods=['DELETE'])
+@expense_bp.route('/expenses/<int:expense_id>', methods=['DELETE'])
 @jwt_required()
 def delete_expense(expense_id):
     try:
-        current_user_id = get_jwt_identity()
-        expense = Expense.query.filter_by(id=expense_id, user_id=current_user_id).first()
+        user_id = get_jwt_identity()
+        expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first()
         
         if not expense:
             return jsonify({'error': 'Expense not found'}), 404
@@ -137,4 +170,26 @@ def delete_expense(expense_id):
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'Failed to delete expense'}), 500
+
+@expense_bp.route('/expenses/categories', methods=['GET'])
+@jwt_required()
+def get_categories():
+    try:
+        user_id = get_jwt_identity()
+        
+        # Get unique categories for the user
+        categories = db.session.query(Expense.category).filter_by(user_id=user_id).distinct().all()
+        category_list = [category[0] for category in categories]
+        
+        # Add common categories if not present
+        common_categories = ['Food', 'Transportation', 'Housing', 'Entertainment', 'Healthcare', 'Shopping', 'Utilities', 'Education', 'Travel', 'Other']
+        
+        for category in common_categories:
+            if category not in category_list:
+                category_list.append(category)
+        
+        return jsonify({'categories': sorted(category_list)}), 200
+        
+    except Exception as e:
+        return jsonify({'error': 'Failed to get categories'}), 500

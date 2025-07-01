@@ -1,7 +1,6 @@
 from extensions import db, bcrypt
-from datetime import datetime, timedelta
-import jwt
-from flask import current_app
+from datetime import datetime
+from flask_jwt_extended import create_access_token
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -11,6 +10,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     expenses = db.relationship('Expense', backref='user', lazy=True, cascade='all, delete-orphan')
@@ -23,19 +23,13 @@ class User(db.Model):
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
     
-    def get_token(self):
-        payload = {
-            'user_id': self.id,
-            'exp': datetime.utcnow() + timedelta(days=7)
-        }
-        return jwt.encode(payload, 'your-secret-key-here-change-in-production', algorithm='HS256')
-    
     def to_dict(self):
         return {
             'id': self.id,
             'username': self.username,
             'email': self.email,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
 class Expense(db.Model):
@@ -45,9 +39,10 @@ class Expense(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     description = db.Column(db.String(200), nullable=False)
     amount = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     def to_dict(self):
         return {
@@ -57,7 +52,8 @@ class Expense(db.Model):
             'amount': self.amount,
             'category': self.category,
             'date': self.date.isoformat() if self.date else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
 class Budget(db.Model):
@@ -65,11 +61,15 @@ class Budget(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    category = db.Column(db.String(100), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     month = db.Column(db.Integer, nullable=False)
     year = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Unique constraint for user, category, month, year
+    __table_args__ = (db.UniqueConstraint('user_id', 'category', 'month', 'year'),)
     
     def to_dict(self):
         return {
@@ -79,7 +79,8 @@ class Budget(db.Model):
             'amount': self.amount,
             'month': self.month,
             'year': self.year,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }
 
 class PasswordReset(db.Model):
@@ -87,6 +88,17 @@ class PasswordReset(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    token = db.Column(db.String(100), nullable=False, unique=True)
+    token = db.Column(db.String(100), unique=True, nullable=False)
     expires_at = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    used = db.Column(db.Boolean, default=False)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'token': self.token,
+            'expires_at': self.expires_at.isoformat() if self.expires_at else None,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'used': self.used
+        }

@@ -1,10 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 
-const Register = () => {
-  const navigate = useNavigate()
+const Register = ({ onLogin }) => {
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -12,7 +11,6 @@ const Register = () => {
     confirmPassword: "",
   })
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -20,6 +18,7 @@ const Register = () => {
     e.preventDefault()
     setError("")
 
+    // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
       return
@@ -33,7 +32,7 @@ const Register = () => {
     setLoading(true)
 
     try {
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("http://127.0.0.1:5000/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -48,14 +47,14 @@ const Register = () => {
       const data = await response.json()
 
       if (response.ok) {
-        navigate("/login", {
-          state: { message: "Registration successful! Please sign in." },
-        })
+        // Store token in localStorage
+        localStorage.setItem("token", data.access_token)
+        onLogin(data.user, data.access_token)
       } else {
         setError(data.error || "Registration failed")
       }
     } catch (err) {
-      setError("Network error. Please try again.")
+      setError("Network error. Please check your connection and try again.")
     } finally {
       setLoading(false)
     }
@@ -84,7 +83,7 @@ const Register = () => {
                 id="username"
                 type="text"
                 className="form-input"
-                placeholder="Choose a username"
+                placeholder="Enter your username"
                 value={formData.username}
                 onChange={(e) => setFormData((prev) => ({ ...prev, username: e.target.value }))}
                 required
@@ -117,7 +116,7 @@ const Register = () => {
                   id="password"
                   type={showPassword ? "text" : "password"}
                   className="form-input"
-                  placeholder="Create a password"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   required
@@ -133,29 +132,20 @@ const Register = () => {
               <label htmlFor="confirmPassword" className="form-label">
                 Confirm Password
               </label>
-              <div className="password-input">
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  className="form-input"
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
-                  required
-                  autoComplete="new-password"
-                />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? "👁️" : "👁️‍🗨️"}
-                </button>
-              </div>
+              <input
+                id="confirmPassword"
+                type="password"
+                className="form-input"
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                required
+                autoComplete="new-password"
+              />
             </div>
 
             <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
+              {loading ? "Creating Account..." : "Create Account"}
             </button>
           </form>
 

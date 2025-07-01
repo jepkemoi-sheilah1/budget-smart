@@ -4,19 +4,19 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { authAPI, expenseAPI, budgetAPI, analyticsAPI } from "@/lib/api"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { expenseAPI, budgetAPI, analyticsAPI } from "@/lib/api"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
 
 interface User {
   id: number
   username: string
   email: string
-  created_at: string
 }
 
 interface Expense {
@@ -25,7 +25,6 @@ interface Expense {
   amount: number
   category: string
   date: string
-  created_at: string
 }
 
 interface Budget {
@@ -34,22 +33,30 @@ interface Budget {
   amount: number
   month: number
   year: number
-  created_at: string
 }
 
 interface Summary {
   total_expenses: number
   total_budget: number
   remaining_budget: number
+  expense_count: number
   month: number
   year: number
 }
+
+interface CategoryData {
+  category: string
+  amount: number
+}
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#82CA9D"]
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null)
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [summary, setSummary] = useState<Summary | null>(null)
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -72,44 +79,48 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
+    const token = localStorage.getItem("token")
+    if (!token) {
+      router.push("/login")
+      return
+    }
+
+    const userData = localStorage.getItem("user")
+    if (userData) {
+      setUser(JSON.parse(userData))
+    }
+
     loadDashboardData()
-  }, [])
+  }, [router])
 
   const loadDashboardData = async () => {
     try {
       setLoading(true)
 
-      // Verify token and get user
-      const userResponse = await authAPI.verifyToken()
-      setUser(userResponse.user)
+      // Load all data in parallel
+      const [expensesRes, budgetsRes, summaryRes] = await Promise.all([
+        expenseAPI.getExpenses({ limit: 10 }),
+        budgetAPI.getBudgets({
+          month: new Date().getMonth() + 1,
+          year: new Date().getFullYear(),
+        }),
+        analyticsAPI.getSummary(),
+      ])
 
-      // Load expenses
-      const expensesResponse = await expenseAPI.getExpenses({ limit: 10 })
-      setExpenses(expensesResponse.expenses)
-
-      // Load budgets
-      const budgetsResponse = await budgetAPI.getBudgets()
-      setBudgets(budgetsResponse.budgets)
-
-      // Load summary
-      const summaryResponse = await analyticsAPI.getSummary()
-      setSummary(summaryResponse.summary)
+      setExpenses(expensesRes.expenses)
+      setBudgets(budgetsRes.budgets)
+      setSummary(summaryRes.summary)
+      setCategoryData(summaryRes.category_breakdown)
     } catch (err) {
-      console.error("Dashboard load error:", err)
-      setError("Failed to load dashboard data")
-      // If token is invalid, redirect to login
+      setError(err instanceof Error ? err.message : "Failed to load dashboard data")
       if (err instanceof Error && err.message.includes("401")) {
-        authAPI.logout()
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
         router.push("/login")
       }
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleLogout = () => {
-    authAPI.logout()
-    router.push("/login")
   }
 
   const handleAddExpense = async (e: React.FormEvent) => {
@@ -129,7 +140,7 @@ export default function DashboardPage() {
         date: new Date().toISOString().split("T")[0],
       })
       setShowExpenseForm(false)
-      loadDashboardData() // Reload data
+      loadDashboardData()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add expense")
     }
@@ -151,11 +162,26 @@ export default function DashboardPage() {
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
       })
-      setBudgetForm(false)
-      loadDashboardData() // Reload data
+      setShowBudgetForm(false)
+      loadDashboardData()
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add budget")
     }
+  }
+
+  const handleDeleteExpense = async (id: number) => {
+    try {
+      await expenseAPI.deleteExpense(id)
+      loadDashboardData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete expense")
+    }
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem("token")
+    localStorage.removeItem("user")
+    router.push("/login")
   }
 
   if (loading) {
@@ -172,14 +198,14 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Budget Smart</h1>
-              <p className="text-gray-600">Welcome back, {user?.username}!</p>
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <h1 className="text-2xl font-bold text-gray-900">Budget Smart</h1>
             </div>
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-700">Welcome, {user?.username}</span>
               <Button variant="outline" onClick={() => router.push("/profile")}>
                 Profile
               </Button>
@@ -191,7 +217,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
           <Alert variant="destructive" className="mb-6">
             <AlertDescription>{error}</AlertDescription>
@@ -200,98 +226,193 @@ export default function DashboardPage() {
 
         {/* Summary Cards */}
         {summary && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card>
-              <CardHeader>
-                <CardTitle>Total Expenses</CardTitle>
-                <CardDescription>This month</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Total Expenses</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-red-600">${summary.total_expenses.toFixed(2)}</p>
+                <div className="text-2xl font-bold text-red-600">${summary.total_expenses.toFixed(2)}</div>
+                <p className="text-xs text-gray-500 mt-1">{summary.expense_count} transactions</p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Total Budget</CardTitle>
-                <CardDescription>This month</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Total Budget</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold text-blue-600">${summary.total_budget.toFixed(2)}</p>
+                <div className="text-2xl font-bold text-blue-600">${summary.total_budget.toFixed(2)}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {summary.month}/{summary.year}
+                </p>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Remaining Budget</CardTitle>
-                <CardDescription>This month</CardDescription>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Remaining Budget</CardTitle>
               </CardHeader>
               <CardContent>
-                <p
-                  className={`text-3xl font-bold ${summary.remaining_budget >= 0 ? "text-green-600" : "text-red-600"}`}
+                <div
+                  className={`text-2xl font-bold ${summary.remaining_budget >= 0 ? "text-green-600" : "text-red-600"}`}
                 >
                   ${summary.remaining_budget.toFixed(2)}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {summary.total_budget > 0
+                    ? `${((summary.total_expenses / summary.total_budget) * 100).toFixed(1)}% used`
+                    : "No budget set"}
                 </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-gray-600">Budget Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Badge variant={summary.remaining_budget >= 0 ? "default" : "destructive"} className="text-sm">
+                  {summary.remaining_budget >= 0 ? "On Track" : "Over Budget"}
+                </Badge>
+                <p className="text-xs text-gray-500 mt-2">Current month status</p>
               </CardContent>
             </Card>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Recent Expenses */}
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Pie Chart */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Recent Expenses</CardTitle>
-                <CardDescription>Your latest transactions</CardDescription>
-              </div>
-              <Button onClick={() => setShowExpenseForm(!showExpenseForm)}>Add Expense</Button>
+            <CardHeader>
+              <CardTitle>Expenses by Category</CardTitle>
+              <CardDescription>Current month breakdown</CardDescription>
             </CardHeader>
             <CardContent>
-              {showExpenseForm && (
-                <form onSubmit={handleAddExpense} className="space-y-4 mb-6 p-4 border rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="description">Description</Label>
-                      <Input
-                        id="description"
-                        value={expenseForm.description}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="amount">Amount</Label>
-                      <Input
-                        id="amount"
-                        type="number"
-                        step="0.01"
-                        value={expenseForm.amount}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                        required
-                      />
-                    </div>
+              {categoryData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ category, percent }) => `${category} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="amount"
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Amount"]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                  No expense data available
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Budget Progress */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Budget Progress</CardTitle>
+              <CardDescription>Current month budget vs expenses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {budgets.length > 0 ? (
+                <div className="space-y-4">
+                  {budgets.map((budget) => {
+                    const spent = categoryData.find((c) => c.category === budget.category)?.amount || 0
+                    const percentage = (spent / budget.amount) * 100
+
+                    return (
+                      <div key={budget.id} className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="font-medium">{budget.category}</span>
+                          <span>
+                            ${spent.toFixed(2)} / ${budget.amount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              percentage > 100 ? "bg-red-500" : percentage > 80 ? "bg-yellow-500" : "bg-green-500"
+                            }`}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-xs text-gray-500">{percentage.toFixed(1)}% used</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-gray-500">
+                  No budgets set for this month
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Add Expense</CardTitle>
+              <CardDescription>Add a new expense quickly</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {!showExpenseForm ? (
+                <Button onClick={() => setShowExpenseForm(true)} className="w-full">
+                  Add New Expense
+                </Button>
+              ) : (
+                <form onSubmit={handleAddExpense} className="space-y-4">
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={expenseForm.description}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                      required
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="category">Category</Label>
-                      <Input
-                        id="category"
-                        value={expenseForm.category}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="date">Date</Label>
-                      <Input
-                        id="date"
-                        type="date"
-                        value={expenseForm.date}
-                        onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                        required
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={expenseForm.amount}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="category">Category</Label>
+                    <Input
+                      id="category"
+                      value={expenseForm.category}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={expenseForm.date}
+                      onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })}
+                      required
+                    />
                   </div>
                   <div className="flex space-x-2">
                     <Button type="submit">Add Expense</Button>
@@ -301,85 +422,63 @@ export default function DashboardPage() {
                   </div>
                 </form>
               )}
-
-              <div className="space-y-4">
-                {expenses.length > 0 ? (
-                  expenses.map((expense) => (
-                    <div key={expense.id} className="flex justify-between items-center p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{expense.description}</p>
-                        <p className="text-sm text-gray-600">{expense.date}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-red-600">${expense.amount.toFixed(2)}</p>
-                        <Badge variant="secondary">{expense.category}</Badge>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No expenses yet</p>
-                )}
-              </div>
             </CardContent>
           </Card>
 
-          {/* Budgets */}
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Budgets</CardTitle>
-                <CardDescription>Your spending limits</CardDescription>
-              </div>
-              <Button onClick={() => setShowBudgetForm(!showBudgetForm)}>Add Budget</Button>
+            <CardHeader>
+              <CardTitle>Quick Add Budget</CardTitle>
+              <CardDescription>Set a budget for a category</CardDescription>
             </CardHeader>
             <CardContent>
-              {showBudgetForm && (
-                <form onSubmit={handleAddBudget} className="space-y-4 mb-6 p-4 border rounded-lg">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="budgetCategory">Category</Label>
-                      <Input
-                        id="budgetCategory"
-                        value={budgetForm.category}
-                        onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="budgetAmount">Amount</Label>
-                      <Input
-                        id="budgetAmount"
-                        type="number"
-                        step="0.01"
-                        value={budgetForm.amount}
-                        onChange={(e) => setBudgetForm({ ...budgetForm, amount: e.target.value })}
-                        required
-                      />
-                    </div>
+              {!showBudgetForm ? (
+                <Button onClick={() => setShowBudgetForm(true)} className="w-full">
+                  Add New Budget
+                </Button>
+              ) : (
+                <form onSubmit={handleAddBudget} className="space-y-4">
+                  <div>
+                    <Label htmlFor="budget-category">Category</Label>
+                    <Input
+                      id="budget-category"
+                      value={budgetForm.category}
+                      onChange={(e) => setBudgetForm({ ...budgetForm, category: e.target.value })}
+                      required
+                    />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="budgetMonth">Month</Label>
-                      <Input
-                        id="budgetMonth"
-                        type="number"
-                        min="1"
-                        max="12"
-                        value={budgetForm.month}
-                        onChange={(e) => setBudgetForm({ ...budgetForm, month: Number.parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="budgetYear">Year</Label>
-                      <Input
-                        id="budgetYear"
-                        type="number"
-                        value={budgetForm.year}
-                        onChange={(e) => setBudgetForm({ ...budgetForm, year: Number.parseInt(e.target.value) })}
-                        required
-                      />
-                    </div>
+                  <div>
+                    <Label htmlFor="budget-amount">Amount</Label>
+                    <Input
+                      id="budget-amount"
+                      type="number"
+                      step="0.01"
+                      value={budgetForm.amount}
+                      onChange={(e) => setBudgetForm({ ...budgetForm, amount: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="budget-month">Month</Label>
+                    <Input
+                      id="budget-month"
+                      type="number"
+                      min="1"
+                      max="12"
+                      value={budgetForm.month}
+                      onChange={(e) => setBudgetForm({ ...budgetForm, month: Number.parseInt(e.target.value) })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="budget-year">Year</Label>
+                    <Input
+                      id="budget-year"
+                      type="number"
+                      min="2000"
+                      value={budgetForm.year}
+                      onChange={(e) => setBudgetForm({ ...budgetForm, year: Number.parseInt(e.target.value) })}
+                      required
+                    />
                   </div>
                   <div className="flex space-x-2">
                     <Button type="submit">Add Budget</Button>
@@ -389,30 +488,46 @@ export default function DashboardPage() {
                   </div>
                 </form>
               )}
-
-              <div className="space-y-4">
-                {budgets.length > 0 ? (
-                  budgets.map((budget) => (
-                    <div key={budget.id} className="flex justify-between items-center p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{budget.category}</p>
-                        <p className="text-sm text-gray-600">
-                          {budget.month}/{budget.year}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-blue-600">${budget.amount.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-center py-4">No budgets set yet</p>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
-      </main>
+
+        {/* Recent Expenses */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Expenses</CardTitle>
+            <CardDescription>Your latest transactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {expenses.length > 0 ? (
+              <div className="space-y-4">
+                {expenses.map((expense) => (
+                  <div key={expense.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div>
+                          <p className="font-medium">{expense.description}</p>
+                          <p className="text-sm text-gray-500">
+                            {expense.category} • {new Date(expense.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                      <span className="font-bold text-red-600">-${expense.amount.toFixed(2)}</span>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteExpense(expense.id)}>
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">No expenses found. Add your first expense above!</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

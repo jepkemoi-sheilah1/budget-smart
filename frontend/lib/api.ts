@@ -1,137 +1,117 @@
-const API_BASE_URL = "http://localhost:5000/api"
+const API_BASE_URL = "http://127.0.0.1:5000/api"
 
-// Get auth token from localStorage
-const getAuthToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("token")
-  }
-  return null
-}
-
-// Set auth token in localStorage
-const setAuthToken = (token: string) => {
-  if (typeof window !== "undefined") {
-    localStorage.setItem("token", token)
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token")
+  return {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
   }
 }
 
-// Remove auth token from localStorage
-const removeAuthToken = () => {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("token")
-  }
-}
-
-// Generic API request function
-const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  const token = getAuthToken()
-
-  const config: RequestInit = {
-    headers: {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-    ...options,
-  }
-
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, config)
-
+// Helper function to handle API responses
+const handleResponse = async (response: Response) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ error: "Network error" }))
     throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
   }
-
   return response.json()
 }
 
-// Auth API functions
+// Auth API
 export const authAPI = {
   login: async (email: string, password: string) => {
-    const data = await apiRequest("/auth/login", {
+    const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     })
-
-    if (data.access_token) {
-      setAuthToken(data.access_token)
-    }
-
-    return data
+    return handleResponse(response)
   },
 
   register: async (username: string, email: string, password: string) => {
-    const data = await apiRequest("/auth/register", {
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),
     })
-
-    if (data.access_token) {
-      setAuthToken(data.access_token)
-    }
-
-    return data
-  },
-
-  logout: () => {
-    removeAuthToken()
+    return handleResponse(response)
   },
 
   forgotPassword: async (email: string) => {
-    return apiRequest("/auth/forgot-password", {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     })
+    return handleResponse(response)
   },
 
   resetPassword: async (token: string, password: string) => {
-    return apiRequest("/auth/reset-password", {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
       method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
     })
+    return handleResponse(response)
   },
 
   verifyToken: async () => {
-    return apiRequest("/auth/verify")
+    const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 }
 
-// User API functions
+// User API
 export const userAPI = {
   getProfile: async () => {
-    return apiRequest("/user/profile")
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 
-  updateProfile: async (username: string, email: string) => {
-    return apiRequest("/user/profile", {
+  updateProfile: async (data: { username?: string; email?: string }) => {
+    const response = await fetch(`${API_BASE_URL}/user/profile`, {
       method: "PUT",
-      body: JSON.stringify({ username, email }),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
     })
+    return handleResponse(response)
   },
 
   changePassword: async (currentPassword: string, newPassword: string) => {
-    return apiRequest("/user/change-password", {
+    const response = await fetch(`${API_BASE_URL}/user/change-password`, {
       method: "POST",
+      headers: getAuthHeaders(),
       body: JSON.stringify({
         current_password: currentPassword,
         new_password: newPassword,
       }),
     })
+    return handleResponse(response)
   },
 
   exportData: async () => {
-    return apiRequest("/user/export-data")
+    const response = await fetch(`${API_BASE_URL}/user/export-data`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 
   deleteAccount: async (password: string) => {
-    return apiRequest("/user/delete-account", {
+    const response = await fetch(`${API_BASE_URL}/user/delete-account`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
       body: JSON.stringify({ password }),
     })
+    return handleResponse(response)
   },
 }
 
-// Expense API functions
+// Expense API
 export const expenseAPI = {
   getExpenses: async (params?: {
     category?: string
@@ -148,50 +128,62 @@ export const expenseAPI = {
       })
     }
 
-    const endpoint = `/expenses${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
-    return apiRequest(endpoint)
+    const response = await fetch(`${API_BASE_URL}/expenses?${queryParams}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 
-  createExpense: async (expense: {
+  createExpense: async (data: {
     description: string
     amount: number
     category: string
     date?: string
   }) => {
-    return apiRequest("/expenses", {
+    const response = await fetch(`${API_BASE_URL}/expenses`, {
       method: "POST",
-      body: JSON.stringify(expense),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
     })
+    return handleResponse(response)
   },
 
   updateExpense: async (
     id: number,
-    expense: {
+    data: {
       description?: string
       amount?: number
       category?: string
       date?: string
     },
   ) => {
-    return apiRequest(`/expenses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
       method: "PUT",
-      body: JSON.stringify(expense),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
     })
+    return handleResponse(response)
   },
 
   deleteExpense: async (id: number) => {
-    return apiRequest(`/expenses/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/expenses/${id}`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     })
+    return handleResponse(response)
+  },
+
+  getCategories: async () => {
+    const response = await fetch(`${API_BASE_URL}/expenses/categories`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 }
 
-// Budget API functions
+// Budget API
 export const budgetAPI = {
-  getBudgets: async (params?: {
-    month?: number
-    year?: number
-  }) => {
+  getBudgets: async (params?: { month?: number; year?: number }) => {
     const queryParams = new URLSearchParams()
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -201,50 +193,55 @@ export const budgetAPI = {
       })
     }
 
-    const endpoint = `/budgets${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
-    return apiRequest(endpoint)
+    const response = await fetch(`${API_BASE_URL}/budgets?${queryParams}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 
-  createBudget: async (budget: {
+  createBudget: async (data: {
     category: string
     amount: number
     month: number
     year: number
   }) => {
-    return apiRequest("/budgets", {
+    const response = await fetch(`${API_BASE_URL}/budgets`, {
       method: "POST",
-      body: JSON.stringify(budget),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
     })
+    return handleResponse(response)
   },
 
   updateBudget: async (
     id: number,
-    budget: {
+    data: {
       category?: string
       amount?: number
       month?: number
       year?: number
     },
   ) => {
-    return apiRequest(`/budgets/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/budgets/${id}`, {
       method: "PUT",
-      body: JSON.stringify(budget),
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
     })
+    return handleResponse(response)
   },
 
   deleteBudget: async (id: number) => {
-    return apiRequest(`/budgets/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/budgets/${id}`, {
       method: "DELETE",
+      headers: getAuthHeaders(),
     })
+    return handleResponse(response)
   },
 }
 
-// Analytics API functions
+// Analytics API
 export const analyticsAPI = {
-  getSummary: async (params?: {
-    month?: number
-    year?: number
-  }) => {
+  getSummary: async (params?: { month?: number; year?: number }) => {
     const queryParams = new URLSearchParams()
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
@@ -254,16 +251,41 @@ export const analyticsAPI = {
       })
     }
 
-    const endpoint = `/analytics/summary${queryParams.toString() ? `?${queryParams.toString()}` : ""}`
-    return apiRequest(endpoint)
+    const response = await fetch(`${API_BASE_URL}/analytics/summary?${queryParams}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 
-  getTrends: async () => {
-    return apiRequest("/analytics/trends")
+  getMonthlyAnalytics: async (year?: number) => {
+    const queryParams = year ? `?year=${year}` : ""
+    const response = await fetch(`${API_BASE_URL}/analytics/monthly${queryParams}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
+  },
+
+  getBudgetVsActual: async (params?: { month?: number; year?: number }) => {
+    const queryParams = new URLSearchParams()
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined) {
+          queryParams.append(key, value.toString())
+        }
+      })
+    }
+
+    const response = await fetch(`${API_BASE_URL}/analytics/budget-vs-actual?${queryParams}`, {
+      headers: getAuthHeaders(),
+    })
+    return handleResponse(response)
   },
 }
 
 // Health check
-export const healthCheck = async () => {
-  return apiRequest("/health")
+export const healthAPI = {
+  check: async () => {
+    const response = await fetch(`${API_BASE_URL}/health`)
+    return handleResponse(response)
+  },
 }
