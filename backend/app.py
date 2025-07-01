@@ -12,7 +12,7 @@ from datetime import datetime
 def create_app():
     app = Flask(__name__)
     
-    # Configuration
+    #  Configuration
     app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
     app.config['JWT_SECRET_KEY'] = 'jwt-secret-string-change-in-production'
     
