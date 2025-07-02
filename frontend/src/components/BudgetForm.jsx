@@ -46,9 +46,16 @@ const BudgetForm = () => {
           className="budget-form-select"
         >
           <option value="Housing">Housing</option>
-          <option value="Food">Food</option>
           <option value="Transportation">Transportation</option>
-          <option value="Entertainment">Entertainment</option>
+          <option value="Food">Food</option>
+          <option value="Health & Medical">Health & Medical</option>
+          <option value="Debt Payments">Debt Payments</option>
+          <option value="Savings & Investments">Savings & Investments</option>
+          <option value="Personal & Family">Personal & Family</option>
+          <option value="Entertainment & Leisure">Entertainment & Leisure</option>
+          <option value="Education">Education</option>
+          <option value="Gifts & Donations">Gifts & Donations</option>
+          <option value="Miscellaneous">Miscellaneous</option>
         </select>
         <input
           type="number"

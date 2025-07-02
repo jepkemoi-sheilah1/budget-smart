@@ -181,8 +181,34 @@ def get_expense(expense_id):
 
 @routes_bp.route('/expenses', methods=['POST'])
 def create_expense():
+    import logging
+    logging.basicConfig(level=logging.DEBUG)
     data = request.get_json()
-    date_obj = datetime.strptime(data['date'], '%Y-%m-%d').date() if 'date' in data else datetime.utcnow().date()
+    logging.debug(f"Received expense data: {data}")
+    # Validate required fields
+    required_fields = ['user_id', 'category_id', 'amount']
+    for field in required_fields:
+        if field not in data:
+            logging.error(f"Missing required field: {field}")
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+
+    # Try parsing date with multiple formats
+    date_str = data.get('date')
+    date_obj = None
+    if date_str:
+        for fmt in ('%Y-%m-%d', '%m/%d/%Y', '%d/%m/%Y'):
+            try:
+                date_obj = datetime.strptime(date_str, fmt).date()
+                break
+            except ValueError:
+                continue
+        if not date_obj:
+            logging.error("Invalid date format")
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD or MM/DD/YYYY or DD/MM/YYYY.'}), 400
+    else:
+        date_obj = datetime.utcnow().date()
+    # Defensive: convert keys to strings to avoid KeyError due to unexpected key types
+    data = {str(k): v for k, v in data.items()}
     expense = Expense(
         user_id=data['user_id'],
         category_id=data['category_id'],
@@ -190,8 +216,16 @@ def create_expense():
         date=date_obj,
         description=data.get('description', '')
     )
-    db.session.add(expense)
-    db.session.commit()
+    try:
+        db.session.add(expense)
+        db.session.commit()
+        logging.debug(f"Expense saved with id: {expense.id}")
+    except Exception as e:
+        import traceback
+        logging.error(f"Error saving expense: {e}")
+        logging.error(traceback.format_exc())
+        db.session.rollback()
+        return jsonify({'error': 'Failed to save expense'}), 500
     return jsonify({
         'id': expense.id,
         'user_id': expense.user_id,

@@ -1,6 +1,18 @@
 import React from 'react';
 
-const categories = ['Housing', 'Food', 'Transportation', 'Entertainment'];
+const categories = [
+  'Housing',
+  'Transportation',
+  'Food',
+  'Health & Medical',
+  'Debt Payments',
+  'Savings & Investments',
+  'Personal & Family',
+  'Entertainment & Leisure',
+  'Education',
+  'Gifts & Donations',
+  'Miscellaneous'
+];
 
 const CategoryList = ({ selectedCategory, onSelectCategory }) => {
   return (

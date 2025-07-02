@@ -440,3 +440,65 @@ body.login-page, body.register-page {
     padding: 15px;
   }
 }
+
+/* Additional responsive styles for smaller screens */
+@media (max-width: 480px) {
+  .navbar {
+    padding: 8px 12px;
+  }
+
+  .dashboard-title {
+    font-size: 22px;
+  }
+
+  .dashboard-user-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .dashboard-main-content {
+    gap: 20px;
+  }
+
+  .dashboard-aside {
+    padding: 15px;
+  }
+
+  .budget-total-row {
+    gap: 20px;
+  }
+
+  .budget-section, .total-expenses-section {
+    padding: 15px;
+  }
+
+  .chart-section {
+    padding: 15px;
+  }
+
+  .dashboard-expenses {
+    padding: 15px;
+  }
+
+  .expense-button {
+    padding: 5px 10px;
+    font-size: 14px;
+  }
+
+  .add-expense-form {
+    gap: 8px;
+    padding: 0 5px;
+  }
+
+  .add-expense-form button {
+    min-width: 80px;
+    font-size: 14px;
+  }
+
+  .footer {
+    padding: 10px 5px;
+    gap: 10px;
+    font-size: 14px;
+  }
+}

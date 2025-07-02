@@ -66,14 +66,15 @@ const Navbar = () => {
         )}
         {user ? (
           <>
-            <div ref={profileRef} style={{ position: 'relative', cursor: 'pointer' }} onClick={toggleProfile} aria-label="User Profile">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="#2563eb" viewBox="0 0 24 24" width="24" height="24">
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-              {profileOpen && <UserProfile user={user} onClose={() => setProfileOpen(false)} logout={logout} />}
-            </div>
+            <button onClick={logout} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: 4, padding: '6px 12px', cursor: 'pointer' }}>
+              Logout
+            </button>
           </>
-        ) : null}
+        ) : (
+          <NavLink to="/login" className="navbar-link">
+            Login
+          </NavLink>
+        )}
       </div>
     </nav>
   );

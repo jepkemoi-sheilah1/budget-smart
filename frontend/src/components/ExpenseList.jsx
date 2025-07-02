@@ -73,11 +73,11 @@ const ExpenseList = () => {
       ) : (
         <>
           <div style={{ display: 'flex', fontWeight: 'bold', padding: '8px 0', borderBottom: '2px solid #000', gap: '10px', flexWrap: 'wrap' }}>
-            <div style={{ width: 20, marginRight: 10 }}></div>
-            <div style={{ flex: '2 1 120px', minWidth: 0 }}>Expense</div>
+            <div style={{ width: 20, marginRight: 10, flexShrink: 0 }}></div>
+            <div style={{ flex: '2 1 120px', minWidth: 0, wordBreak: 'break-word' }}>Expense</div>
             <div style={{ flex: '1 1 100px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>Date</div>
             <div style={{ flex: '1 1 80px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>Amount Spent</div>
-            <div style={{ width: 60 }}></div>
+            <div style={{ width: 60, flexShrink: 0 }}></div>
           </div>
           {filteredExpenses.map(expense => {
             if (editId === expense.id) {
@@ -95,7 +95,7 @@ const ExpenseList = () => {
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    style={{ flex: '2 1 120px', minWidth: 0 }}
+                    style={{ flex: '2 1 120px', minWidth: 0, wordBreak: 'break-word' }}
                   />
                   <input
                     type="date"
@@ -128,10 +128,10 @@ const ExpenseList = () => {
                   marginRight: 10,
                   flexShrink: 0
                 }}></div>
-                <div style={{ flex: '2 1 120px', overflowWrap: 'break-word', minWidth: 0, textAlign: 'left' }}>{expense.name}</div>
+                <div style={{ flex: '2 1 120px', overflowWrap: 'break-word', minWidth: 0, textAlign: 'left', wordBreak: 'break-word' }}>{expense.name}</div>
                 <div style={{ flex: '1 1 100px', textAlign: 'left', whiteSpace: 'nowrap', minWidth: 0 }}>{expense.date}</div>
                 <div style={{ flex: '1 1 80px', textAlign: 'right', whiteSpace: 'nowrap', minWidth: 0 }}>${expense.amount.toFixed(2)}</div>
-                <div style={{ flex: '0 0 120px', display: 'flex', justifyContent: 'flex-end', gap: '5px' }}>
+                <div style={{ flex: '0 0 120px', display: 'flex', justifyContent: 'flex-end', gap: '5px', flexShrink: 0 }}>
                   <button
                     onClick={() => startEdit(expense)}
                     style={{
