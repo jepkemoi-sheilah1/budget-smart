@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.models import Expense, Budget
 from extensions import db
@@ -11,7 +11,9 @@ analytics_bp = Blueprint('analytics', __name__)
 @jwt_required()
 def get_summary():
     try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         
         # Get query parameters
         month = request.args.get('month', type=int, default=datetime.now().month)
@@ -67,6 +69,7 @@ def get_summary():
         }), 200
         
     except Exception as e:
+        current_app.logger.error(f"Failed to get summary: {e}")
         return jsonify({'error': 'Failed to get analytics summary'}), 500
 
 @analytics_bp.route('/analytics/monthly', methods=['GET'])

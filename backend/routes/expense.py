@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.models import Expense
 from extensions import db
@@ -10,7 +10,9 @@ expense_bp = Blueprint('expense', __name__)
 @jwt_required()
 def get_expenses():
     try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         
         # Get query parameters
         category = request.args.get('category')
@@ -29,6 +31,7 @@ def get_expenses():
                 start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
                 query = query.filter(Expense.date >= start_date_obj)
             except ValueError:
+                current_app.logger.error("Invalid start_date format")
                 return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
         
         if end_date:
@@ -36,6 +39,7 @@ def get_expenses():
                 end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
                 query = query.filter(Expense.date <= end_date_obj)
             except ValueError:
+                current_app.logger.error("Invalid end_date format")
                 return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
         
         # Order by date descending
@@ -51,59 +55,58 @@ def get_expenses():
         }), 200
         
     except Exception as e:
+        current_app.logger.error(f"Failed to get expenses: {e}")
         return jsonify({'error': 'Failed to get expenses'}), 500
 
 @expense_bp.route('/expenses', methods=['POST'])
 @jwt_required()
 def create_expense():
-    try:
-        user_id = get_jwt_identity()
-        data = request.get_json()
-        
-        description = data.get('description', '').strip()
-        amount = data.get('amount')
-        category = data.get('category', '').strip()
-        expense_date = data.get('date')
-        
-        # Validation
-        if not description:
-            return jsonify({'error': 'Description is required'}), 400
-        
-        if not amount or amount <= 0:
-            return jsonify({'error': 'Amount must be greater than 0'}), 400
-        
-        if not category:
-            return jsonify({'error': 'Category is required'}), 400
-        
-        # Parse date
-        if expense_date:
-            try:
-                expense_date_obj = datetime.strptime(expense_date, '%Y-%m-%d').date()
-            except ValueError:
-                return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
-        else:
-            expense_date_obj = date.today()
-        
-        # Create expense
-        expense = Expense(
-            user_id=user_id,
-            description=description,
-            amount=amount,
-            category=category,
-            date=expense_date_obj
-        )
-        
-        db.session.add(expense)
-        db.session.commit()
-        
-        return jsonify({
-            'message': 'Expense created successfully',
-            'expense': expense.to_dict()
-        }), 201
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Failed to create expense'}), 500
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    description = data.get('description', '').strip()
+    amount = data.get('amount')
+    category = data.get('category', '').strip()
+    expense_date = data.get('date')
+    
+    # Validation
+    if not description:
+        current_app.logger.error("Validation error: Description is required")
+        return jsonify({'error': 'Description is required'}), 400
+
+    if not amount or amount <= 0:
+        current_app.logger.error("Validation error: Amount must be greater than 0")
+        return jsonify({'error': 'Amount must be greater than 0'}), 400
+
+    if not category:
+        current_app.logger.error("Validation error: Category is required")
+        return jsonify({'error': 'Category is required'}), 400
+
+    # Parse date
+    if expense_date:
+        try:
+            expense_date_obj = datetime.strptime(expense_date, '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+    else:
+        expense_date_obj = date.today()
+
+    # Create expense
+    expense = Expense(
+        user_id=user_id,
+        description=description,
+        amount=amount,
+        category=category,
+        date=expense_date_obj
+    )
+
+    db.session.add(expense)
+    db.session.commit()
+
+    return jsonify({
+        'message': 'Expense created successfully',
+        'expense': expense.to_dict()
+    }), 201
 
 @expense_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
 @jwt_required()

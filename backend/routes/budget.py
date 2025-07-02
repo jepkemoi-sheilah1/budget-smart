@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models.models import Budget
 from extensions import db
@@ -10,7 +10,9 @@ budget_bp = Blueprint('budget', __name__)
 @jwt_required()
 def get_budgets():
     try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         
         # Get query parameters
         month = request.args.get('month', type=int)
@@ -31,13 +33,16 @@ def get_budgets():
         }), 200
         
     except Exception as e:
+        current_app.logger.error(f"Failed to get budgets: {e}")
         return jsonify({'error': 'Failed to get budgets'}), 500
 
 @budget_bp.route('/budgets', methods=['POST'])
 @jwt_required()
 def create_budget():
     try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         data = request.get_json()
         
         category = data.get('category', '').strip()
@@ -47,15 +52,19 @@ def create_budget():
         
         # Validation
         if not category:
+            current_app.logger.error("Validation error: Category is required")
             return jsonify({'error': 'Category is required'}), 400
-        
+
         if not amount or amount <= 0:
+            current_app.logger.error("Validation error: Amount must be greater than 0")
             return jsonify({'error': 'Amount must be greater than 0'}), 400
-        
+
         if not (1 <= month <= 12):
+            current_app.logger.error("Validation error: Month must be between 1 and 12")
             return jsonify({'error': 'Month must be between 1 and 12'}), 400
-        
+
         if year < 2000 or year > 2100:
+            current_app.logger.error("Validation error: Year must be between 2000 and 2100")
             return jsonify({'error': 'Year must be between 2000 and 2100'}), 400
         
         # Check if budget already exists for this category, month, year
@@ -95,13 +104,16 @@ def create_budget():
         
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Failed to create budget: {e}")
         return jsonify({'error': 'Failed to create budget'}), 500
 
 @budget_bp.route('/budgets/<int:budget_id>', methods=['PUT'])
 @jwt_required()
 def update_budget(budget_id):
     try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first()
         
         if not budget:
@@ -142,13 +154,16 @@ def update_budget(budget_id):
         
     except Exception as e:
         db.session.rollback()
+        current_app.logger.error(f"Failed to update budget: {e}")
         return jsonify({'error': 'Failed to update budget'}), 500
 
 @budget_bp.route('/budgets/<int:budget_id>', methods=['DELETE'])
 @jwt_required()
 def delete_budget(budget_id):
-    try:
+  try:
+        current_app.logger.debug(f"Request headers: {dict(request.headers)}")
         user_id = get_jwt_identity()
+        current_app.logger.debug(f"JWT identity user_id: {user_id}")
         budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first()
         
         if not budget:
@@ -159,6 +174,7 @@ def delete_budget(budget_id):
         
         return jsonify({'message': 'Budget deleted successfully'}), 200
         
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': 'Failed to delete budget'}), 500
+  except Exception as e:
+      db.session.rollback()
+      current_app.logger.error(f"Failed to delete budget: {e}")
+      return jsonify({'error': 'Failed to delete budget'}), 500

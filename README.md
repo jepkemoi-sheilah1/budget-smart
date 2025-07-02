@@ -1,6 +1,6 @@
 # Budget Smart - Personal Finance Management System
 
-A comprehensive personal finance management application built with Next.js frontend and Python Flask backend, featuring expense tracking, budget management, and financial analytics.
+A comprehensive personal finance management application built with React.js frontend and Python Flask backend, featuring expense tracking, budget management, and financial analytics.
 
 ## 🚀 Features
 
