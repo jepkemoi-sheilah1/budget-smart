@@ -1,4 +1,3 @@
-
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models.models import User, Budget, Category, Expense
@@ -26,6 +25,32 @@ def root():
 
 @routes_bp.route('/register', methods=['POST'])
 def register():
+    """
+    Register a new user
+    ---
+    tags:
+      - Auth
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            username:
+              type: string
+              example: sheilah
+            email:
+              type: string
+              example: sheilah@example.com
+            password:
+              type: string
+              example: password123
+    responses:
+      201:
+        description: User created successfully
+      400:
+        description: Missing fields or user already exists
+    """
     data = request.get_json()
     if not data.get('username') or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Username, email, and password are required.'}), 400
@@ -52,6 +77,29 @@ def register():
 
 @routes_bp.route('/login', methods=['POST'])
 def login():
+    """
+    Login a user
+    ---
+    tags:
+      - Auth
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            email:
+              type: string
+              example: sheilah@example.com
+            password:
+              type: string
+              example: password123
+    responses:
+      200:
+        description: Login successful, returns JWT token
+      401:
+        description: Invalid email or password
+    """
     data = request.get_json()
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Email and password are required.'}), 400
@@ -69,6 +117,17 @@ def login():
 @routes_bp.route('/logout', methods=['POST'])
 @jwt_required()
 def logout():
+    """
+    Logout current user
+    ---
+    tags:
+      - Auth
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Logged out successfully
+    """
     return jsonify({'message': 'Logged out successfully'})
 
 
@@ -77,6 +136,17 @@ def logout():
 @routes_bp.route('/users/me', methods=['GET'])
 @jwt_required()
 def get_current_user():
+    """
+    Get current logged in user
+    ---
+    tags:
+      - Users
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: Returns current user details
+    """
     user_id = int(get_jwt_identity())
     user = User.query.get_or_404(user_id)
     return jsonify({'id': user.id, 'username': user.username, 'email': user.email})
@@ -85,6 +155,28 @@ def get_current_user():
 @routes_bp.route('/users/me', methods=['PUT'])
 @jwt_required()
 def update_current_user():
+    """
+    Update current user
+    ---
+    tags:
+      - Users
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        schema:
+          properties:
+            username:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+    responses:
+      200:
+        description: User updated successfully
+    """
     user_id = int(get_jwt_identity())
     user = User.query.get_or_404(user_id)
     data = request.get_json()
@@ -99,6 +191,17 @@ def update_current_user():
 @routes_bp.route('/users/me', methods=['DELETE'])
 @jwt_required()
 def delete_current_user():
+    """
+    Delete current user
+    ---
+    tags:
+      - Users
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: User deleted successfully
+    """
     user_id = int(get_jwt_identity())
     user = User.query.get_or_404(user_id)
     db.session.delete(user)
@@ -111,6 +214,17 @@ def delete_current_user():
 @routes_bp.route('/budgets', methods=['GET'])
 @jwt_required()
 def get_budgets():
+    """
+    Get all budgets for current user
+    ---
+    tags:
+      - Budgets
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: List of budgets
+    """
     user_id = int(get_jwt_identity())
     budgets = Budget.query.filter_by(user_id=user_id).all()
     return jsonify([{'id': b.id, 'user_id': b.user_id, 'amount': b.amount, 'month': b.month} for b in budgets])
@@ -119,6 +233,24 @@ def get_budgets():
 @routes_bp.route('/budgets/<int:budget_id>', methods=['GET'])
 @jwt_required()
 def get_budget(budget_id):
+    """
+    Get a specific budget
+    ---
+    tags:
+      - Budgets
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: budget_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Budget details
+      404:
+        description: Budget not found
+    """
     user_id = int(get_jwt_identity())
     budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     return jsonify({'id': budget.id, 'user_id': budget.user_id, 'amount': budget.amount, 'month': budget.month})
@@ -127,6 +259,29 @@ def get_budget(budget_id):
 @routes_bp.route('/budgets', methods=['POST'])
 @jwt_required()
 def create_budget():
+    """
+    Create a new budget
+    ---
+    tags:
+      - Budgets
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            amount:
+              type: number
+              example: 10000
+            month:
+              type: string
+              example: "2026-05"
+    responses:
+      201:
+        description: Budget created successfully
+    """
     user_id = int(get_jwt_identity())
     data = request.get_json()
     budget = Budget(user_id=user_id, amount=data['amount'], month=data['month'])
@@ -138,6 +293,30 @@ def create_budget():
 @routes_bp.route('/budgets/<int:budget_id>', methods=['PUT'])
 @jwt_required()
 def update_budget(budget_id):
+    """
+    Update a budget
+    ---
+    tags:
+      - Budgets
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: budget_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          properties:
+            amount:
+              type: number
+            month:
+              type: string
+    responses:
+      200:
+        description: Budget updated successfully
+    """
     user_id = int(get_jwt_identity())
     budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     data = request.get_json()
@@ -150,6 +329,22 @@ def update_budget(budget_id):
 @routes_bp.route('/budgets/<int:budget_id>', methods=['DELETE'])
 @jwt_required()
 def delete_budget(budget_id):
+    """
+    Delete a budget
+    ---
+    tags:
+      - Budgets
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: budget_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Budget deleted successfully
+    """
     user_id = int(get_jwt_identity())
     budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     db.session.delete(budget)
@@ -162,6 +357,17 @@ def delete_budget(budget_id):
 @routes_bp.route('/categories', methods=['GET'])
 @jwt_required()
 def get_categories():
+    """
+    Get all categories
+    ---
+    tags:
+      - Categories
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: List of categories
+    """
     categories = Category.query.all()
     return jsonify([{'id': c.id, 'name': c.name} for c in categories])
 
@@ -169,6 +375,22 @@ def get_categories():
 @routes_bp.route('/categories/<int:category_id>', methods=['GET'])
 @jwt_required()
 def get_category(category_id):
+    """
+    Get a specific category
+    ---
+    tags:
+      - Categories
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: category_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Category details
+    """
     category = Category.query.get_or_404(category_id)
     return jsonify({'id': category.id, 'name': category.name})
 
@@ -176,7 +398,32 @@ def get_category(category_id):
 @routes_bp.route('/categories', methods=['POST'])
 @jwt_required()
 def create_category():
-    data = request.get_json()
+    """
+    Create a new category
+    ---
+    tags:
+      - Categories
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            name:
+              type: string
+              example: Food
+    responses:
+      201:
+        description: Category created successfully
+    """
+    data = request.get_json(silent=True)
+    if not data or not data.get('name'):
+        return jsonify({'error': 'Category name is required.'}), 400
+    existing = Category.query.filter_by(name=data['name']).first()
+    if existing:
+        return jsonify({'error': 'Category already exists.'}), 400
     category = Category(name=data['name'])
     db.session.add(category)
     db.session.commit()
@@ -186,6 +433,28 @@ def create_category():
 @routes_bp.route('/categories/<int:category_id>', methods=['PUT'])
 @jwt_required()
 def update_category(category_id):
+    """
+    Update a category
+    ---
+    tags:
+      - Categories
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: category_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          properties:
+            name:
+              type: string
+    responses:
+      200:
+        description: Category updated successfully
+    """
     category = Category.query.get_or_404(category_id)
     data = request.get_json()
     category.name = data.get('name', category.name)
@@ -196,6 +465,22 @@ def update_category(category_id):
 @routes_bp.route('/categories/<int:category_id>', methods=['DELETE'])
 @jwt_required()
 def delete_category(category_id):
+    """
+    Delete a category
+    ---
+    tags:
+      - Categories
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: category_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Category deleted successfully
+    """
     category = Category.query.get_or_404(category_id)
     db.session.delete(category)
     db.session.commit()
@@ -207,8 +492,25 @@ def delete_category(category_id):
 @routes_bp.route('/expenses', methods=['GET'])
 @jwt_required()
 def get_expenses():
+    """
+    Get all expenses for current user
+    ---
+    tags:
+      - Expenses
+    security:
+      - Bearer: []
+    parameters:
+      - in: query
+        name: month
+        type: string
+        example: "2026-05"
+        description: Filter expenses by month (YYYY-MM)
+    responses:
+      200:
+        description: List of expenses
+    """
     user_id = int(get_jwt_identity())
-    month = request.args.get('month')  # optional filter e.g. ?month=2026-05
+    month = request.args.get('month')
     query = Expense.query.filter_by(user_id=user_id)
     if month:
         query = query.filter(db.func.strftime('%Y-%m', Expense.date) == month)
@@ -226,6 +528,22 @@ def get_expenses():
 @routes_bp.route('/expenses/<int:expense_id>', methods=['GET'])
 @jwt_required()
 def get_expense(expense_id):
+    """
+    Get a specific expense
+    ---
+    tags:
+      - Expenses
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: expense_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Expense details
+    """
     user_id = int(get_jwt_identity())
     expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     return jsonify({
@@ -241,6 +559,37 @@ def get_expense(expense_id):
 @routes_bp.route('/expenses', methods=['POST'])
 @jwt_required()
 def create_expense():
+    """
+    Create a new expense
+    ---
+    tags:
+      - Expenses
+    security:
+      - Bearer: []
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          properties:
+            category_id:
+              type: integer
+              example: 1
+            amount:
+              type: number
+              example: 500
+            date:
+              type: string
+              example: "2026-05-11"
+            description:
+              type: string
+              example: Grocery shopping
+    responses:
+      201:
+        description: Expense created successfully
+      400:
+        description: Missing required fields
+    """
     user_id = int(get_jwt_identity())
     data = request.get_json()
 
@@ -290,6 +639,34 @@ def create_expense():
 @routes_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
 @jwt_required()
 def update_expense(expense_id):
+    """
+    Update an expense
+    ---
+    tags:
+      - Expenses
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: expense_id
+        type: integer
+        required: true
+      - in: body
+        name: body
+        schema:
+          properties:
+            category_id:
+              type: integer
+            amount:
+              type: number
+            date:
+              type: string
+            description:
+              type: string
+    responses:
+      200:
+        description: Expense updated successfully
+    """
     user_id = int(get_jwt_identity())
     expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     data = request.get_json()
@@ -312,6 +689,22 @@ def update_expense(expense_id):
 @routes_bp.route('/expenses/<int:expense_id>', methods=['DELETE'])
 @jwt_required()
 def delete_expense(expense_id):
+    """
+    Delete an expense
+    ---
+    tags:
+      - Expenses
+    security:
+      - Bearer: []
+    parameters:
+      - in: path
+        name: expense_id
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Expense deleted successfully
+    """
     user_id = int(get_jwt_identity())
     expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     db.session.delete(expense)
@@ -324,8 +717,25 @@ def delete_expense(expense_id):
 @routes_bp.route('/dashboard', methods=['GET'])
 @jwt_required()
 def dashboard():
+    """
+    Get dashboard summary
+    ---
+    tags:
+      - Dashboard
+    security:
+      - Bearer: []
+    parameters:
+      - in: query
+        name: month
+        type: string
+        example: "2026-05"
+        description: Filter by month (YYYY-MM)
+    responses:
+      200:
+        description: Dashboard summary with total budget, spent and remaining
+    """
     user_id = int(get_jwt_identity())
-    month = request.args.get('month')  # e.g. ?month=2026-05
+    month = request.args.get('month')
 
     budget_query = Budget.query.filter_by(user_id=user_id)
     expense_query = Expense.query.filter_by(user_id=user_id)
