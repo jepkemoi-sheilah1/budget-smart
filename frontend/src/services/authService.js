@@ -6,7 +6,7 @@ export const login = async (credentials) => {
 };
 
 export const register = async (userData) => {
-  const response = await api.post('/users', userData);
+  const response = await api.post('/register', userData);
   return response.data;
 };
 
@@ -15,12 +15,12 @@ export const logout = async () => {
   return response.data;
 };
 
-export const updateUser = async (userId, userData) => {
-  const response = await api.put(`/users/${userId}`, userData);
+export const updateUser = async (userData) => {
+  const response = await api.put('/users/me', userData);
   return response.data;
 };
 
-export const deleteUser = async (userId) => {
-  const response = await api.delete(`/users/${userId}`);
+export const deleteUser = async () => {
+  const response = await api.delete('/users/me');
   return response.data;
 };

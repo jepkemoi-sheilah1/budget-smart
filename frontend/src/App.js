@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -13,12 +13,14 @@ import './App.css';
 
 function AppContent() {
   const { user } = useContext(AuthContext);
+  const location = useLocation();
+  const isDashboard = location.pathname === '/dashboard';
 
   return (
-    <>
+    <div className="flex flex-col min-h-screen">
       {user && <WelcomeAlert username={user.username} />}
-      <Navbar />
-      <div className="main-content">
+      {!isDashboard && <Navbar />}
+      <div className={isDashboard ? '' : 'flex-1'}>
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -27,8 +29,8 @@ function AppContent() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-      <Footer />
-    </>
+      {!isDashboard && <Footer />}
+    </div>
   );
 }
 

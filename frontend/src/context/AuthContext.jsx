@@ -6,20 +6,25 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
-  // Example: check if user is logged in on mount (could be improved with real auth check)
   useEffect(() => {
-    // TODO: Implement real user session check, e.g. fetch current user from backend
-    setUser(null);
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
   const login = async (credentials) => {
-    const userData = await loginService(credentials);
-    setUser(userData.user);
-    return userData;
+    const data = await loginService(credentials);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data;
   };
 
   const logout = async () => {
     await logoutService();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 
