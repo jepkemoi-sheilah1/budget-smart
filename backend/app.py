@@ -8,23 +8,11 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 CORS(app,
-     resources={r"/api/*": {"origins": [
-         "http://localhost:3001",
-         "http://127.0.0.1:3001",
-         "https://budget-smart-three.vercel.app"
-     ]}},
-     supports_credentials=True,
+     resources={r"/api/*": {"origins": "*"}},
+     supports_credentials=False,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3001')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
 
 db.init_app(app)
 jwt.init_app(app)
