@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect
 from flask_migrate import Migrate
 from config import Config
 from extensions import db, jwt
@@ -20,6 +20,11 @@ db.init_app(app)
 jwt.init_app(app)
 migrate = Migrate(app, db)
 
+app.config['SWAGGER'] = {
+    'title': 'Spentwise API',
+    'uiversion': 3
+}
+
 swagger_config = {
     "headers": [],
     "specs": [
@@ -32,7 +37,10 @@ swagger_config = {
     ],
     "static_url_path": "/flasgger_static",
     "swagger_ui": True,
-    "specs_route": "/apidocs/"
+    "specs_route": "/apidocs/",
+    "swagger_ui_bundle_js": "//unpkg.com/swagger-ui-dist@3/swagger-ui-bundle.js",
+    "swagger_ui_standalone_preset_js": "//unpkg.com/swagger-ui-dist@3/swagger-ui-standalone-preset.js",
+    "swagger_ui_css": "//unpkg.com/swagger-ui-dist@3/swagger-ui.css",
 }
 
 swagger_template = {
@@ -57,6 +65,10 @@ from models import models
 from routes import routes_bp
 
 app.register_blueprint(routes_bp, url_prefix='/api')
+
+@app.route('/')
+def index():
+    return redirect('/apidocs/')
 
 @app.route('/init-db')
 def init_db():
