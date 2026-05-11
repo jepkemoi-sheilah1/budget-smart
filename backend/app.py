@@ -7,13 +7,16 @@ from flask_cors import CORS
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app, 
-     resources={r"/api/*": {"origins": ["http://localhost:3001", "http://127.0.0.1:3001"]}},
+CORS(app,
+     resources={r"/api/*": {"origins": [
+         "http://localhost:3001",
+         "http://127.0.0.1:3001",
+         "https://budget-smart-three.vercel.app"
+     ]}},
      supports_credentials=True,
      allow_headers=["Content-Type", "Authorization"],
      methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 )
-from flask import make_response
 
 @app.after_request
 def after_request(response):
