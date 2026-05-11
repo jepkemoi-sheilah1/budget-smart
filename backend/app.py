@@ -1,16 +1,30 @@
 from flask import Flask
 from flask_migrate import Migrate
-from flask import Flask
 from config import Config
-from extensions import db
+from extensions import db, jwt
 from flask_cors import CORS
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
-CORS(app, supports_credentials=True)
+CORS(app, 
+     resources={r"/api/*": {"origins": ["http://localhost:3001", "http://127.0.0.1:3001"]}},
+     supports_credentials=True,
+     allow_headers=["Content-Type", "Authorization"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
+from flask import make_response
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3001')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 db.init_app(app)
+jwt.init_app(app)
 migrate = Migrate(app, db)
 
 from models import models

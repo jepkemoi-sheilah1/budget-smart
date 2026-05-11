@@ -1,44 +1,39 @@
+
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models.models import User, Budget, Category, Expense
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_jwt_extended import (
+    create_access_token, jwt_required, get_jwt_identity
+)
 
 routes_bp = Blueprint('routes', __name__)
 
+@routes_bp.route('/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    return jsonify({}), 200
+
+@routes_bp.route('/', methods=['OPTIONS'])
+def handle_options_root():
+    return jsonify({}), 200
+
 @routes_bp.route('/', methods=['GET'])
 def root():
-    return {"message": "Welcome to the Budget Smart API"}
+    return jsonify({"message": "Welcome to the Budget Smart API"})
 
-# User routes
-@routes_bp.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    return jsonify([{'id': u.id, 'username': u.username, 'email': u.email} for u in users])
+# ─── AUTH ────────────────────────────────────────────────────────────────────
 
-@routes_bp.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    user = User.query.get_or_404(user_id)
-    return jsonify({'id': user.id, 'username': user.username, 'email': user.email})
-
-@routes_bp.route('/users', methods=['POST'])
-def create_user():
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
+@routes_bp.route('/register', methods=['POST'])
+def register():
     data = request.get_json()
-    logging.debug(f"Received user creation data: {data}")
-
-    # Validate required fields
     if not data.get('username') or not data.get('email') or not data.get('password'):
-        logging.error("Validation failed: Missing username, email, or password")
         return jsonify({'error': 'Username, email, and password are required.'}), 400
 
-    # Check if username or email already exists
     existing_user = User.query.filter(
         (User.username == data['username']) | (User.email == data['email'])
     ).first()
     if existing_user:
-        logging.error("Validation failed: Username or email already exists")
         return jsonify({'error': 'Username or email already exists.'}), 400
 
     try:
@@ -46,32 +41,15 @@ def create_user():
         user = User(username=data['username'], email=data['email'], password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        logging.debug(f"User created with id: {user.id}")
-        return jsonify({'id': user.id, 'username': user.username, 'email': user.email}), 201
+        token = create_access_token(identity=str(user.id))
+        return jsonify({
+            'token': token,
+            'user': {'id': user.id, 'username': user.username, 'email': user.email}
+        }), 201
     except Exception as e:
-        import traceback
-        logging.error(f"Error creating user: {e}")
-        logging.error(traceback.format_exc())
         return jsonify({'error': 'Failed to create user'}), 500
 
-@routes_bp.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    user = User.query.get_or_404(user_id)
-    data = request.get_json()
-    user.username = data.get('username', user.username)
-    user.email = data.get('email', user.email)
-    user.password = data.get('password', user.password)
-    db.session.commit()
-    return jsonify({'id': user.id, 'username': user.username, 'email': user.email})
 
-@routes_bp.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({'message': 'User deleted'})
-
-# Login route
 @routes_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -80,58 +58,123 @@ def login():
 
     user = User.query.filter_by(email=data['email']).first()
     if user and check_password_hash(user.password, data['password']):
-        return jsonify({'message': 'Login successful', 'user': {'id': user.id, 'username': user.username, 'email': user.email}})
-    else:
-        return jsonify({'error': 'Invalid email or password.'}), 401
+        token = create_access_token(identity=str(user.id))
+        return jsonify({
+            'token': token,
+            'user': {'id': user.id, 'username': user.username, 'email': user.email}
+        })
+    return jsonify({'error': 'Invalid email or password.'}), 401
 
-# Budget routes
+
+@routes_bp.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+    return jsonify({'message': 'Logged out successfully'})
+
+
+# ─── USERS ───────────────────────────────────────────────────────────────────
+
+@routes_bp.route('/users/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    user_id = int(get_jwt_identity())
+    user = User.query.get_or_404(user_id)
+    return jsonify({'id': user.id, 'username': user.username, 'email': user.email})
+
+
+@routes_bp.route('/users/me', methods=['PUT'])
+@jwt_required()
+def update_current_user():
+    user_id = int(get_jwt_identity())
+    user = User.query.get_or_404(user_id)
+    data = request.get_json()
+    user.username = data.get('username', user.username)
+    user.email = data.get('email', user.email)
+    if data.get('password'):
+        user.password = generate_password_hash(data['password'])
+    db.session.commit()
+    return jsonify({'id': user.id, 'username': user.username, 'email': user.email})
+
+
+@routes_bp.route('/users/me', methods=['DELETE'])
+@jwt_required()
+def delete_current_user():
+    user_id = int(get_jwt_identity())
+    user = User.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    return jsonify({'message': 'User deleted'})
+
+
+# ─── BUDGETS ─────────────────────────────────────────────────────────────────
+
 @routes_bp.route('/budgets', methods=['GET'])
+@jwt_required()
 def get_budgets():
-    budgets = Budget.query.all()
+    user_id = int(get_jwt_identity())
+    budgets = Budget.query.filter_by(user_id=user_id).all()
     return jsonify([{'id': b.id, 'user_id': b.user_id, 'amount': b.amount, 'month': b.month} for b in budgets])
 
+
 @routes_bp.route('/budgets/<int:budget_id>', methods=['GET'])
+@jwt_required()
 def get_budget(budget_id):
-    budget = Budget.query.get_or_404(budget_id)
+    user_id = int(get_jwt_identity())
+    budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     return jsonify({'id': budget.id, 'user_id': budget.user_id, 'amount': budget.amount, 'month': budget.month})
 
+
 @routes_bp.route('/budgets', methods=['POST'])
+@jwt_required()
 def create_budget():
+    user_id = int(get_jwt_identity())
     data = request.get_json()
-    budget = Budget(user_id=data['user_id'], amount=data['amount'], month=data['month'])
+    budget = Budget(user_id=user_id, amount=data['amount'], month=data['month'])
     db.session.add(budget)
     db.session.commit()
     return jsonify({'id': budget.id, 'user_id': budget.user_id, 'amount': budget.amount, 'month': budget.month}), 201
 
+
 @routes_bp.route('/budgets/<int:budget_id>', methods=['PUT'])
+@jwt_required()
 def update_budget(budget_id):
-    budget = Budget.query.get_or_404(budget_id)
+    user_id = int(get_jwt_identity())
+    budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     data = request.get_json()
-    budget.user_id = data.get('user_id', budget.user_id)
     budget.amount = data.get('amount', budget.amount)
     budget.month = data.get('month', budget.month)
     db.session.commit()
     return jsonify({'id': budget.id, 'user_id': budget.user_id, 'amount': budget.amount, 'month': budget.month})
 
+
 @routes_bp.route('/budgets/<int:budget_id>', methods=['DELETE'])
+@jwt_required()
 def delete_budget(budget_id):
-    budget = Budget.query.get_or_404(budget_id)
+    user_id = int(get_jwt_identity())
+    budget = Budget.query.filter_by(id=budget_id, user_id=user_id).first_or_404()
     db.session.delete(budget)
     db.session.commit()
     return jsonify({'message': 'Budget deleted'})
 
-# Category routes
+
+# ─── CATEGORIES ──────────────────────────────────────────────────────────────
+
 @routes_bp.route('/categories', methods=['GET'])
+@jwt_required()
 def get_categories():
     categories = Category.query.all()
     return jsonify([{'id': c.id, 'name': c.name} for c in categories])
 
+
 @routes_bp.route('/categories/<int:category_id>', methods=['GET'])
+@jwt_required()
 def get_category(category_id):
     category = Category.query.get_or_404(category_id)
     return jsonify({'id': category.id, 'name': category.name})
 
+
 @routes_bp.route('/categories', methods=['POST'])
+@jwt_required()
 def create_category():
     data = request.get_json()
     category = Category(name=data['name'])
@@ -139,7 +182,9 @@ def create_category():
     db.session.commit()
     return jsonify({'id': category.id, 'name': category.name}), 201
 
+
 @routes_bp.route('/categories/<int:category_id>', methods=['PUT'])
+@jwt_required()
 def update_category(category_id):
     category = Category.query.get_or_404(category_id)
     data = request.get_json()
@@ -147,17 +192,27 @@ def update_category(category_id):
     db.session.commit()
     return jsonify({'id': category.id, 'name': category.name})
 
+
 @routes_bp.route('/categories/<int:category_id>', methods=['DELETE'])
+@jwt_required()
 def delete_category(category_id):
     category = Category.query.get_or_404(category_id)
     db.session.delete(category)
     db.session.commit()
     return jsonify({'message': 'Category deleted'})
 
-# Expense routes
+
+# ─── EXPENSES ────────────────────────────────────────────────────────────────
+
 @routes_bp.route('/expenses', methods=['GET'])
+@jwt_required()
 def get_expenses():
-    expenses = Expense.query.all()
+    user_id = int(get_jwt_identity())
+    month = request.args.get('month')  # optional filter e.g. ?month=2026-05
+    query = Expense.query.filter_by(user_id=user_id)
+    if month:
+        query = query.filter(db.func.strftime('%Y-%m', Expense.date) == month)
+    expenses = query.all()
     return jsonify([{
         'id': e.id,
         'user_id': e.user_id,
@@ -167,9 +222,12 @@ def get_expenses():
         'description': e.description
     } for e in expenses])
 
+
 @routes_bp.route('/expenses/<int:expense_id>', methods=['GET'])
+@jwt_required()
 def get_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+    user_id = int(get_jwt_identity())
+    expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     return jsonify({
         'id': expense.id,
         'user_id': expense.user_id,
@@ -179,20 +237,18 @@ def get_expense(expense_id):
         'description': expense.description
     })
 
+
 @routes_bp.route('/expenses', methods=['POST'])
+@jwt_required()
 def create_expense():
-    import logging
-    logging.basicConfig(level=logging.DEBUG)
+    user_id = int(get_jwt_identity())
     data = request.get_json()
-    logging.debug(f"Received expense data: {data}")
-    # Validate required fields
-    required_fields = ['user_id', 'category_id', 'amount']
+
+    required_fields = ['category_id', 'amount']
     for field in required_fields:
         if field not in data:
-            logging.error(f"Missing required field: {field}")
             return jsonify({'error': f'Missing required field: {field}'}), 400
 
-    # Try parsing date with multiple formats
     date_str = data.get('date')
     date_obj = None
     if date_str:
@@ -203,14 +259,12 @@ def create_expense():
             except ValueError:
                 continue
         if not date_obj:
-            logging.error("Invalid date format")
-            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD or MM/DD/YYYY or DD/MM/YYYY.'}), 400
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD.'}), 400
     else:
         date_obj = datetime.utcnow().date()
-    # Defensive: convert keys to strings to avoid KeyError due to unexpected key types
-    data = {str(k): v for k, v in data.items()}
+
     expense = Expense(
-        user_id=data['user_id'],
+        user_id=user_id,
         category_id=data['category_id'],
         amount=data['amount'],
         date=date_obj,
@@ -219,13 +273,10 @@ def create_expense():
     try:
         db.session.add(expense)
         db.session.commit()
-        logging.debug(f"Expense saved with id: {expense.id}")
     except Exception as e:
-        import traceback
-        logging.error(f"Error saving expense: {e}")
-        logging.error(traceback.format_exc())
         db.session.rollback()
         return jsonify({'error': 'Failed to save expense'}), 500
+
     return jsonify({
         'id': expense.id,
         'user_id': expense.user_id,
@@ -235,11 +286,13 @@ def create_expense():
         'description': expense.description
     }), 201
 
+
 @routes_bp.route('/expenses/<int:expense_id>', methods=['PUT'])
+@jwt_required()
 def update_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+    user_id = int(get_jwt_identity())
+    expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     data = request.get_json()
-    expense.user_id = data.get('user_id', expense.user_id)
     expense.category_id = data.get('category_id', expense.category_id)
     expense.amount = data.get('amount', expense.amount)
     if 'date' in data:
@@ -255,18 +308,41 @@ def update_expense(expense_id):
         'description': expense.description
     })
 
+
 @routes_bp.route('/expenses/<int:expense_id>', methods=['DELETE'])
+@jwt_required()
 def delete_expense(expense_id):
-    expense = Expense.query.get_or_404(expense_id)
+    user_id = int(get_jwt_identity())
+    expense = Expense.query.filter_by(id=expense_id, user_id=user_id).first_or_404()
     db.session.delete(expense)
     db.session.commit()
     return jsonify({'message': 'Expense deleted'})
 
-@routes_bp.route('/logout', methods=['POST'])
-def logout():
-    # For stateless JWT or token-based auth, logout is handled client-side by deleting token
-    # For session-based auth, clear the session here
-    # Assuming session-based auth for example:
-    from flask import session
-    session.clear()
-    return jsonify({'message': 'Logged out successfully'})
+
+# ─── DASHBOARD ───────────────────────────────────────────────────────────────
+
+@routes_bp.route('/dashboard', methods=['GET'])
+@jwt_required()
+def dashboard():
+    user_id = int(get_jwt_identity())
+    month = request.args.get('month')  # e.g. ?month=2026-05
+
+    budget_query = Budget.query.filter_by(user_id=user_id)
+    expense_query = Expense.query.filter_by(user_id=user_id)
+
+    if month:
+        budget_query = budget_query.filter_by(month=month)
+        expense_query = expense_query.filter(
+            db.func.strftime('%Y-%m', Expense.date) == month
+        )
+
+    total_budget = sum(b.amount for b in budget_query.all())
+    total_spent = sum(e.amount for e in expense_query.all())
+    remaining = total_budget - total_spent
+
+    return jsonify({
+        'month': month or 'all',
+        'total_budget': total_budget,
+        'total_spent': total_spent,
+        'remaining': remaining
+    })
