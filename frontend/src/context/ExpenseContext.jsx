@@ -108,8 +108,6 @@ export const ExpenseProvider = ({ children }) => {
 
   const updateBudget = async (category, amount) => {
     try {
-      // Find existing budget for user and category
-      const existingBudget = budgets[category] || 0;
       // Update local state optimistically
       setBudgets(prevBudgets => ({
         ...prevBudgets,
