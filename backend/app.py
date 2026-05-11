@@ -3,6 +3,9 @@ from flask_migrate import Migrate
 from config import Config
 from extensions import db, jwt
 from flask_cors import CORS
+from flasgger import Swagger
+
+swagger = Swagger(app)
 
 app = Flask(__name__)
 app.config.from_object(Config)
