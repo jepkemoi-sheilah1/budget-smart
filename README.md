@@ -1,115 +1,153 @@
-# Budget Smart
+# 💰 Spentwise
 
-## About
-Budget Smart is a budgeting application designed to help users manage their finances effectively. It allows users to create budgets, categorize expenses, and track their spending over time.
+> A modern personal finance tracker to help you manage budgets, track expenses, and visualize your spending.
 
-## Features
-- User registration and authentication
-- Create, update, and delete budgets
-- Manage expense categories
-- Add, update, and delete expenses
-- View expenses by category and date
-- Secure login and logout functionality
+---
 
-## Tech Stack
+## 🚀 Live Demo
+- **Frontend:** Coming soon
+- **Backend API:** Coming soon
+
+---
+
+## ✨ Features
+- 🔐 User registration and JWT authentication
+- 📊 Interactive dashboard with spending overview
+- 🎯 Set monthly budgets per category
+- 💸 Add, view, and delete expenses
+- 📈 Visual bar chart of spending by category
+- 📱 Fully responsive — works on mobile and desktop
+- 🔒 Protected routes — data is user-specific
+
+---
+
+## 🛠 Tech Stack
+
 ### Backend
-- Python
-- Flask
-- SQLAlchemy
-- Flask-Migrate
+- Python & Flask
+- SQLAlchemy & Flask-Migrate
+- Flask-JWT-Extended
 - Flask-CORS
+- SQLite (development) → PostgreSQL (production)
 
 ### Frontend
 - React
+- Tailwind CSS
 - Axios
 - Recharts
 - React Router DOM
 
-## Installation
+---
 
-### Backend
-1. Navigate to the `backend` directory:
-   ```bash
-   cd backend
-   ```
-2. Install dependencies using Pipenv:
-   ```bash
-   pipenv install
-   ```
-3. Activate the virtual environment:
-   ```bash
-   pipenv shell
-   ```
-4. Run database migrations:
-   ```bash
-   flask db upgrade
-   ```
+## ⚙️ Installation & Setup
 
-### Frontend
-1. Navigate to the `frontend` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install dependencies using npm:
-   ```bash
-   npm install
-   ```
+### Prerequisites
+- Python 3.12+
+- Node.js 18+
+- npm
 
-## Usage
-
-### Backend
-From the `backend` directory, run the Flask development server:
+### Backend Setup
 ```bash
-flask run
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
-The backend API will be available at `http://localhost:5000/api`.
 
-### Frontend
-From the `frontend` directory, start the React development server:
+Create the database:
 ```bash
+python -c "from app import app; from extensions import db; app.app_context().push(); db.create_all()"
+```
+
+Seed categories:
+```bash
+python -c "
+from app import app
+from extensions import db
+from models.models import Category
+
+categories = [
+    'Housing', 'Transportation', 'Food', 'Health & Medical',
+    'Debt Payments', 'Savings & Investments', 'Personal & Family',
+    'Entertainment & Leisure', 'Education', 'Gifts & Donations', 'Miscellaneous'
+]
+
+with app.app_context():
+    for name in categories:
+        existing = Category.query.filter_by(name=name).first()
+        if not existing:
+            db.session.add(Category(name=name))
+    db.session.commit()
+    print('Categories seeded!')
+"
+```
+
+Run the backend:
+```bash
+python app.py
+```
+Backend runs at `http://localhost:5000/api`
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
 npm start
 ```
-The frontend app will be available at `http://localhost:3000`.
+Frontend runs at `http://localhost:3001`
 
-## API Endpoints
+---
 
-### User Endpoints
-- `GET /api/users` - Get all users
-- `GET /api/users/<user_id>` - Get user by ID
-- `POST /api/users` - Create a new user
-- `PUT /api/users/<user_id>` - Update user by ID
-- `DELETE /api/users/<user_id>` - Delete user by ID
+## 📡 API Endpoints
 
-### Authentication
-- `POST /api/login` - User login
-- `POST /api/logout` - User logout
+### Auth
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/register` | Register a new user |
+| POST | `/api/login` | Login and get JWT token |
+| POST | `/api/logout` | Logout |
 
-### Budget Endpoints
-- `GET /api/budgets` - Get all budgets
-- `GET /api/budgets/<budget_id>` - Get budget by ID
-- `POST /api/budgets` - Create a new budget
-- `PUT /api/budgets/<budget_id>` - Update budget by ID
-- `DELETE /api/budgets/<budget_id>` - Delete budget by ID
+### Users
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/users/me` | Get current user |
+| PUT | `/api/users/me` | Update current user |
+| DELETE | `/api/users/me` | Delete current user |
 
-### Category Endpoints
-- `GET /api/categories` - Get all categories
-- `GET /api/categories/<category_id>` - Get category by ID
-- `POST /api/categories` - Create a new category
-- `PUT /api/categories/<category_id>` - Update category by ID
-- `DELETE /api/categories/<category_id>` - Delete category by ID
+### Budgets
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/budgets` | Get user budgets |
+| POST | `/api/budgets` | Create a budget |
+| PUT | `/api/budgets/<id>` | Update a budget |
+| DELETE | `/api/budgets/<id>` | Delete a budget |
 
-### Expense Endpoints
-- `GET /api/expenses` - Get all expenses
-- `GET /api/expenses/<expense_id>` - Get expense by ID
-- `POST /api/expenses` - Create a new expense
-- `PUT /api/expenses/<expense_id>` - Update expense by ID
-- `DELETE /api/expenses/<expense_id>` - Delete expense by ID
+### Categories
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/categories` | Get all categories |
+| POST | `/api/categories` | Create a category |
 
-## Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Make sure to follow the existing code style and include tests where applicable.
+### Expenses
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/expenses` | Get user expenses |
+| POST | `/api/expenses` | Add an expense |
+| PUT | `/api/expenses/<id>` | Update an expense |
+| DELETE | `/api/expenses/<id>` | Delete an expense |
 
-## License
-This project currently does not have a license file. Please contact the repository owner for licensing information.
-## author 
-     jepkemoi_sheilah1
+### Dashboard
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/dashboard?month=YYYY-MM` | Get monthly summary |
 
+---
+
+## 👩‍💻 Author
+**Sheilah Jepkemoi**  
+[GitHub](https://github.com/jepkemoi_sheilah1)
+
+---
+
+## 📄 License
+This project is open source. Contact the author for licensing information.
