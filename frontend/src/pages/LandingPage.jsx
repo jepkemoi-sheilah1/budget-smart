@@ -15,7 +15,7 @@ const LandingPage = () => {
             Take Control of <span className="text-blue-600">Your Money</span>
           </h1>
           <p className="text-xl text-slate-500 mb-10 max-w-xl mx-auto">
-            Spentwise helps you track expenses, set budgets, and visualize your spending — all in one place.
+            Spentwise helps you track expenses, set budgets, and visualize your spending all in one place.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <NavLink to="/register">
